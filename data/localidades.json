@@ -1,0 +1,11 @@
+[
+ {"nome": "Ponta Grossa", "bairro": "Ponta Grossa", "tipo": "bairro oficial",
+  "nota": "Bairro oficial de Belém (Lei 7.806/1996). No OpenStreetMap não há limite próprio: a área aparece dentro do polígono do Cruzeiro.",
+  "lat": -1.3032041, "lng": -48.4839131, "fonte": "OpenStreetMap (ponto do lugar)"},
+ {"nome": "Tapajós", "bairro": "Tapanã", "tipo": "conjunto/comunidade",
+  "nota": "Posição aproximada (Conj. Tapajós, Residencial Benedito Monteiro). Confirmar no local.",
+  "lat": -1.3430575, "lng": -48.4519635, "fonte": "OpenStreetMap (endereço no conjunto)"},
+ {"nome": "Eduardo Angelim", "bairro": "Parque Guajará", "tipo": "comunidade",
+  "nota": "Posição aproximada (Rua Eduardo Angelim, Vila Irmã Dulce). Confirmar no local.",
+  "lat": -1.3153876, "lng": -48.4601229, "fonte": "OpenStreetMap (rua homônima)"}
+]

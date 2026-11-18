@@ -1,30 +1,66 @@
 # Mapa das Congregações – Distrito Icoaraci (Belém-PA)
 
-Mapa interativo das congregações do distrito, com ferramentas de estudo geográfico.
+Mapa interativo das **96 congregações** do distrito, com login para pastores e líderes e ferramentas de estudo geográfico.
 
 ## Estrutura do distrito
-**96 congregações** em **33 áreas numeradas**, mais dois grupos à parte: **Templo Central** e **Manancial de Bênção**.
-Na importação, a planilha é conferida contra essa estrutura: total, áreas faltando ou fora de 1 a 33, nomes repetidos e linhas sem área.
+- **5 setores** (cores do Demonstrativo de Áreas 2026: 1 roxo, 2 verde, 3 azul, 4 vermelho, 5 amarelo)
+- **33 áreas numeradas**, cada uma com uma **sede**, mais o **Templo Central** e o **Manancial de Bênção** como grupos à parte
+- Fonte: *Demonstrativo de Áreas – Ano/2026*, em `data/estrutura.json`
 
 ## Funcionalidades
-- **Base:** ruas do OpenStreetMap, imagem de satélite e limites oficiais dos bairros (DAICO, DABEN e Outeiro).
-- **Congregações:** marcadores coloridos por área (Templo Central e Manancial de Bênção em destaque), busca e filtro por área.
-- **Distância:** em linha reta (Haversine) e pelas ruas, de carro e a pé (OSRM), com índice de sinuosidade.
-- **Vizinha mais próxima:** tabela que destaca pares a menos de 500 m e congregações isoladas (mais de 2 km).
-- **Áreas de influência:** polígonos de Voronoi recortados pelos limites dos bairros, com área em km².
-- **Raio de alcance:** de 250 m a 3 km.
-- **Cobertura por bairro:** distância média, numa grade de 250 m, até a congregação mais próxima.
-- **Cadastro:** importação de planilha (.xlsx/.csv), com a grafia da área padronizada ("01", "AREA 1", "1ª Área" → "Área 1"; "Sede" → "Templo Central"), posicionamento por clique, ajuste arrastando o marcador, exportação em .json e .csv.
+- **Mapa base:** ruas (OpenStreetMap), satélite e limites dos bairros de Icoaraci, Bengui e Outeiro
+- **Localidades:** Ponta Grossa, Tapajós (Tapanã) e Eduardo Angelim (Parque Guajará)
+- **Congregações:** cores por setor ou por área, sedes com ★, busca e filtros (setor, área, só sedes)
+- **Distâncias:** linha reta (geodésica) e pelas ruas, de carro e a pé, com índice de sinuosidade
+- **Sedes:** distância média e máxima até a sede da área e alerta de congregações mais perto da sede de outra área
+- **Territórios:** de cada setor e de cada área, ligações congregação → sede, áreas de influência (Voronoi), raio de alcance e cobertura por bairro
+- **Cadastro:** posicionar por clique (com aviso quando o ponto cai fora dos bairros), arrastar para ajustar, editar dados, importar e exportar planilha
+- **Login e permissões:** cada pessoa só altera o que lhe cabe, todas as alterações ficam no histórico e aparecem para todos na hora
 
-## Rodar localmente
+| Papel    | O que pode fazer |
+|----------|------------------|
+| Pendente | Nada: aguarda aprovação |
+| Leitor   | Ver mapa, listas e análises |
+| Editor   | Além de ver, posicionar e editar as congregações **da sua área** |
+| Admin    | Tudo, mais importar planilha, excluir e aprovar usuários |
+
+## Como colocar no ar
+
+### 1. Banco de dados (Supabase, gratuito)
+1. Crie uma conta em **supabase.com** e um projeto (*New project*). Escolha a região **South America (São Paulo)**.
+2. Em **SQL Editor**, rode nesta ordem:
+   1. `supabase/schema.sql`: tabelas, regras de segurança e histórico
+   2. `supabase/seed.sql`: setores, áreas e as 96 congregações
+   3. `seed_responsaveis.sql`: responsáveis das áreas. Esse arquivo é entregue à parte e **não fica no GitHub**.
+3. Em **Authentication → URL Configuration**, coloque o endereço do site em *Site URL*.
+4. Em **Project Settings → API**, copie a *Project URL* e a *anon public key* para `js/config.js`.
+5. Abra o site, crie sua conta e, no SQL Editor, torne-se administrador:
+   ```sql
+   update public.perfis set papel = 'admin' where email = 'seu-email@exemplo.com';
+   ```
+6. A partir daí, aprove os demais usuários na aba **Usuários** do próprio site.
+
+Sem `js/config.js` preenchido, o site funciona em **modo local**: sem login, com os dados salvos só no navegador.
+
+### 2. Site (GitHub Pages)
+No repositório: **Settings → Pages → Source: Deploy from a branch → main / (root)**.
+
+## Desenvolvimento
 ```bash
 python3 -m http.server 8080
 ```
-Abra http://localhost:8080.
 
-## Dados
-- `data/bairros.geojson`: limites dos bairros, obtidos do OpenStreetMap por `scripts/baixar_bairros.py`.
-- `data/congregacoes.json`: dados oficiais. Gere-o pela aba Cadastro (botão "Exportar .json") e coloque-o aqui.
-- `data/exemplo.json`: pontos fictícios, usados apenas enquanto não existem dados oficiais.
+```bash
+PGHOST=... PGUSER=postgres supabase/testes/rodar.sh
+```
+
+```bash
+node testes/interface-online.js
+```
+
+O primeiro comando serve o site. O segundo roda os testes das regras do banco num PostgreSQL local. O terceiro roda os testes de interface (login e permissões) com o Supabase simulado.
+
+- `scripts/baixar_bairros.py`: atualiza os limites dos bairros a partir do OpenStreetMap
+- `scripts/gerar_seed.py`: gera `supabase/seed.sql` a partir de `data/estrutura.json`
 
 Mapa base © colaboradores do OpenStreetMap (ODbL).

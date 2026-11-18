@@ -8,28 +8,78 @@
 <link rel="stylesheet" href="css/estilo.css">
 </head>
 <body>
-<div id="app">
+
+<!-- ============ LOGIN ============ -->
+<div id="tela-login" class="tela" hidden>
+  <form id="form-login" class="cartao">
+    <h1>Distrito Icoaraci</h1>
+    <p class="sub">Mapa das congregações · Belém – PA</p>
+    <nav class="abas abas-login">
+      <button type="button" data-modo="entrar" class="ativa">Entrar</button>
+      <button type="button" data-modo="cadastrar">Criar conta</button>
+      <button type="button" data-modo="recuperar">Esqueci a senha</button>
+    </nav>
+    <label data-so="cadastrar">Nome completo<input id="login-nome" autocomplete="name"></label>
+    <label data-so="entrar cadastrar recuperar">E-mail<input id="login-email" type="email" autocomplete="email" required></label>
+    <label data-so="entrar cadastrar">Senha<input id="login-senha" type="password" autocomplete="current-password" minlength="6"></label>
+    <button type="submit" class="primario largo" id="btn-login">Entrar</button>
+    <p id="login-msg" class="msg" role="status"></p>
+    <p class="dica" data-so="cadastrar">Depois de criar a conta, um administrador do distrito precisa aprovar seu acesso.</p>
+  </form>
+</div>
+
+<div id="tela-pendente" class="tela" hidden>
+  <div class="cartao">
+    <h1>Aguardando aprovação</h1>
+    <p>Sua conta (<b id="pendente-email"></b>) foi criada. Um administrador do distrito precisa liberar seu acesso.</p>
+    <p class="dica">Avise o secretário ou o pastor do distrito. Depois de aprovado, recarregue esta página.</p>
+    <div class="linha"><button class="primario" onclick="location.reload()">Recarregar</button><button class="btn-sair">Sair</button></div>
+  </div>
+</div>
+
+<div id="tela-nova-senha" class="tela" hidden>
+  <form id="form-nova-senha" class="cartao">
+    <h1>Nova senha</h1>
+    <label>Digite a nova senha<input id="nova-senha" type="password" minlength="6" required autocomplete="new-password"></label>
+    <button class="primario largo">Salvar senha</button>
+    <p id="nova-senha-msg" class="msg"></p>
+  </form>
+</div>
+
+<!-- ============ APLICATIVO ============ -->
+<div id="app" hidden>
   <aside id="painel">
     <header>
-      <h1>Distrito Icoaraci</h1>
-      <p class="sub">Mapa das congregações · Belém – PA</p>
-      <div id="aviso-exemplo" class="aviso" hidden>
-        Mostrando <b>dados de exemplo</b>. Importe a planilha e posicione as congregações na aba <b>Cadastro</b>.
+      <div class="topo">
+        <div><h1>Distrito Icoaraci</h1><p class="sub">Mapa das congregações · Belém – PA</p></div>
+        <div class="usuario"><span id="usuario-nome"></span><span id="usuario-papel" class="etiqueta"></span><button class="btn-sair link">Sair</button></div>
+      </div>
+      <div id="aviso-local" class="aviso" hidden>
+        <b>Modo local:</b> os dados ficam só neste navegador. Configure o banco online (veja o README) para que pastores e líderes usem juntos.
       </div>
     </header>
 
-    <nav class="abas">
+    <nav class="abas" id="abas-principais">
       <button data-aba="congregacoes" class="ativa">Congregações</button>
       <button data-aba="analise">Análise</button>
-      <button data-aba="cadastro">Cadastro</button>
+      <button data-aba="cadastro" data-papel="editor admin">Cadastro</button>
+      <button data-aba="usuarios" data-papel="admin" data-modo="nuvem">Usuários</button>
     </nav>
 
     <!-- ABA: CONGREGAÇÕES -->
     <section id="aba-congregacoes" class="aba ativa">
-      <input id="busca" type="search" placeholder="Buscar congregação, área ou bairro…">
-      <select id="filtro-area"><option value="">Todas as áreas</option></select>
+      <input id="busca" type="search" placeholder="Buscar congregação, área, bairro ou responsável…">
+      <div class="linha2">
+        <select id="filtro-setor"><option value="">Todos os setores</option></select>
+        <select id="filtro-area"><option value="">Todas as áreas</option></select>
+      </div>
+      <div class="linha2">
+        <label class="check"><input type="checkbox" id="so-sedes"> Só as sedes</label>
+        <label class="inline">Cores: <select id="modo-cor"><option value="setor">por setor</option><option value="area">por área</option></select></label>
+      </div>
+      <div id="legenda-setores" class="legenda-setores"></div>
       <div id="resumo" class="resumo"></div>
-      <ul id="lista" class="lista"></ul>
+      <div id="lista" class="lista-areas"></div>
     </section>
 
     <!-- ABA: ANÁLISE -->
@@ -45,16 +95,13 @@
         <div id="resultado-distancia" class="resultado"></div>
       </details>
 
-      <details>
-        <summary>🧭 Congregação mais próxima de cada uma</summary>
-        <p class="dica">Pares a menos de <b>500 m</b> ficam em laranja (possível sobreposição). Congregações a mais de <b>2 km</b> da vizinha ficam em azul (isoladas).</p>
-        <button id="btn-vizinhos" class="primario">Gerar tabela</button>
-        <div id="tabela-vizinhos"></div>
-      </details>
-
       <details open>
         <summary>🗺️ Camadas de estudo</summary>
         <label class="check"><input type="checkbox" id="cam-bairros" checked> Limites dos bairros</label>
+        <label class="check"><input type="checkbox" id="cam-localidades" checked> Localidades (Ponta Grossa, Tapajós, Eduardo Angelim)</label>
+        <label class="check"><input type="checkbox" id="cam-territorio-setor"> Território de cada setor</label>
+        <label class="check"><input type="checkbox" id="cam-territorio-area"> Território de cada área</label>
+        <label class="check"><input type="checkbox" id="cam-ligacoes"> Ligações congregação → sede da área</label>
         <label class="check"><input type="checkbox" id="cam-voronoi"> Áreas de influência (Voronoi)</label>
         <label class="check"><input type="checkbox" id="cam-raios"> Raio de alcance</label>
         <div class="faixa">
@@ -64,33 +111,54 @@
         <label class="check"><input type="checkbox" id="cam-cobertura"> Cobertura por bairro</label>
         <div id="legenda-cobertura" class="legenda" hidden></div>
       </details>
+
+      <details>
+        <summary>⛪ Sedes: distância das congregações até a sede da área</summary>
+        <p class="dica">Para cada área: distância média e máxima até a sede. Em <b>laranja</b> estão as congregações que ficam <b>mais perto da sede de outra área</b> do que da sua. São candidatas a revisão da divisão de áreas.</p>
+        <button id="btn-sedes" class="primario">Gerar relatório</button>
+        <div id="tabela-sedes"></div>
+      </details>
+
+      <details>
+        <summary>🧭 Congregação mais próxima de cada uma</summary>
+        <p class="dica">Pares a menos de <b>500 m</b> aparecem em laranja (possível sobreposição). Congregações a mais de <b>2 km</b> da vizinha aparecem em azul (isoladas).</p>
+        <button id="btn-vizinhos" class="primario">Gerar tabela</button>
+        <div id="tabela-vizinhos"></div>
+      </details>
     </section>
 
     <!-- ABA: CADASTRO -->
     <section id="aba-cadastro" class="aba">
+      <div id="progresso" class="progresso"></div>
       <details open>
-        <summary>1. Importar planilha</summary>
-        <p class="dica">Formatos .xlsx ou .csv. São reconhecidas as colunas <b>Nome</b> (ou Congregação) e <b>Área</b>. Colunas como <b>Dirigente</b> e <b>Endereço</b> são opcionais.</p>
+        <summary>📍 Posicionar congregações no mapa</summary>
+        <p class="dica">Clique em <b>Posicionar</b> e depois no ponto exato do templo. Para chegar perto, use a busca de ruas ou a camada <b>Satélite</b> (botão no canto do mapa).</p>
+        <input id="busca-endereco" type="search" placeholder="Buscar rua ou local (ex.: Rua Manoel Barata)">
+        <ul id="resultado-endereco" class="lista mini"></ul>
+        <label class="check"><input type="checkbox" id="modo-edicao"> Permitir arrastar marcadores para ajustar</label>
+        <label class="check"><input type="checkbox" id="so-pendentes" checked> Mostrar só as que faltam posicionar</label>
+        <div id="pendentes" class="lista-areas"></div>
+      </details>
+      <details data-papel="admin">
+        <summary>📄 Importar planilha</summary>
+        <p class="dica">Formatos .xlsx ou .csv. São reconhecidas as colunas <b>Nome</b> (ou Congregação), <b>Área</b> e, se houver, <b>Sede</b> (Sim/X), <b>Dirigente</b>, <b>Endereço</b>, <b>Lat</b> e <b>Lng</b>. Congregações que já existem são atualizadas, sem duplicar.</p>
         <input type="file" id="arquivo" accept=".xlsx,.xls,.csv">
         <div id="resultado-import" class="resultado"></div>
       </details>
-      <details open>
-        <summary>2. Posicionar no mapa</summary>
-        <p class="dica">Clique em <b>Posicionar</b> e depois no ponto exato do mapa onde fica o templo. Use a busca de ruas para chegar perto. Depois disso, ainda é possível arrastar o marcador para ajustar.</p>
-        <input id="busca-endereco" type="search" placeholder="Buscar rua ou local (ex.: Rua Manoel Barata, Icoaraci)">
-        <ul id="resultado-endereco" class="lista mini"></ul>
-        <label class="check"><input type="checkbox" id="modo-edicao"> Permitir arrastar marcadores</label>
-        <ul id="pendentes" class="lista"></ul>
-      </details>
       <details>
-        <summary>3. Salvar e compartilhar</summary>
-        <p class="dica">As posições ficam salvas neste navegador. Exporte o arquivo e envie para o responsável publicar no mapa oficial.</p>
+        <summary>💾 Exportar</summary>
         <div class="linha">
           <button id="btn-exportar-json">Exportar .json</button>
-          <button id="btn-exportar-csv">Exportar .csv</button>
+          <button id="btn-exportar-csv">Exportar planilha .csv</button>
         </div>
-        <button id="btn-apagar" class="perigo">Apagar dados deste navegador</button>
+        <button id="btn-apagar" class="perigo" data-modo="local">Recomeçar (apagar dados deste navegador)</button>
       </details>
+    </section>
+
+    <!-- ABA: USUÁRIOS -->
+    <section id="aba-usuarios" class="aba">
+      <p class="dica"><b>Leitor:</b> vê o mapa. <b>Editor:</b> edita as congregações da área dele. <b>Admin:</b> edita tudo e aprova usuários.</p>
+      <div id="lista-usuarios"></div>
     </section>
 
     <footer>Mapa base © colaboradores do <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a></footer>
@@ -99,11 +167,47 @@
   <main id="mapa"></main>
   <button id="alternar-painel" aria-label="Mostrar/ocultar painel">☰</button>
   <div id="instrucao" hidden></div>
+  <div id="aviso-flutuante" hidden></div>
 </div>
+
+<!-- ============ FORMULÁRIO DA CONGREGAÇÃO ============ -->
+<dialog id="dlg-congregacao">
+  <form id="form-congregacao" method="dialog">
+    <h2 id="dlg-titulo">Congregação</h2>
+    <label>Nome<input name="nome" required></label>
+    <div class="linha2">
+      <label>Área<select name="area" required></select></label>
+      <label class="check alto"><input type="checkbox" name="sede_area"> Sede da área</label>
+    </div>
+    <div class="linha2">
+      <label>Bairro<input name="bairro" list="lista-bairros"></label>
+      <label>Localidade / comunidade<input name="localidade" list="lista-localidades" placeholder="ex.: Tapajós"></label>
+    </div>
+    <label>Dirigente<input name="dirigente"></label>
+    <label>Endereço<input name="endereco"></label>
+    <label>Observações<textarea name="observacoes" rows="2"></textarea></label>
+    <p id="dlg-coords" class="dica"></p>
+    <p id="dlg-msg" class="msg"></p>
+    <div id="dlg-historico" class="historico"></div>
+    <div class="linha fim">
+      <button type="button" id="dlg-excluir" class="perigo" data-papel="admin">Excluir</button>
+      <span class="espaco"></span>
+      <button type="button" id="dlg-historico-btn" data-modo="nuvem">Histórico</button>
+      <button type="button" id="dlg-posicionar">Posicionar no mapa</button>
+      <button type="button" id="dlg-cancelar">Cancelar</button>
+      <button type="submit" class="primario" id="dlg-salvar">Salvar</button>
+    </div>
+  </form>
+</dialog>
+<datalist id="lista-bairros"></datalist>
+<datalist id="lista-localidades"></datalist>
 
 <script src="vendor/leaflet.js"></script>
 <script src="vendor/turf.min.js"></script>
 <script src="vendor/xlsx.full.min.js"></script>
+<script src="vendor/supabase.js"></script>
+<script src="js/config.js"></script>
+<script src="js/dados.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
