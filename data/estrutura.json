@@ -1,0 +1,333 @@
+{
+ "fonte": "Demonstrativo de Áreas – Ano/2026 (Congregações) – Total: 96",
+ "setores": [
+  {
+   "numero": 1,
+   "cor": "#6a3d9a"
+  },
+  {
+   "numero": 2,
+   "cor": "#2e9e4f"
+  },
+  {
+   "numero": 3,
+   "cor": "#2b8cd6"
+  },
+  {
+   "numero": 4,
+   "cor": "#d7303a"
+  },
+  {
+   "numero": 5,
+   "cor": "#e7b416"
+  }
+ ],
+ "areas": [
+  {
+   "nome": "Templo Central",
+   "setor": 1,
+   "congregacoes": [
+    "Templo Central"
+   ]
+  },
+  {
+   "nome": "Área 1",
+   "setor": 1,
+   "congregacoes": [
+    "Vale de Josafá",
+    "Vale de Jaboque",
+    "Campos do Jordão"
+   ]
+  },
+  {
+   "nome": "Área 2",
+   "setor": 1,
+   "congregacoes": [
+    "Fonte de Benção",
+    "Chave de Davi",
+    "Fonte de Paz",
+    "Shekinah"
+   ]
+  },
+  {
+   "nome": "Área 3",
+   "setor": 5,
+   "congregacoes": [
+    "Monte de Israel",
+    "Caná da Galiléia",
+    "Beth Shalon",
+    "Orvalho de Hermon",
+    "Verbo de Deus"
+   ]
+  },
+  {
+   "nome": "Área 4",
+   "setor": 2,
+   "congregacoes": [
+    "Maranata",
+    "Macedônia",
+    "Jeová Jireh",
+    "Jeová Nissi",
+    "Vida Nova"
+   ]
+  },
+  {
+   "nome": "Área 5",
+   "setor": 2,
+   "congregacoes": [
+    "Monte Gerizim",
+    "Ágape"
+   ]
+  },
+  {
+   "nome": "Área 6",
+   "setor": 2,
+   "congregacoes": [
+    "Betânia",
+    "Rio de Água Viva",
+    "Porta da Vitória",
+    "Alfa"
+   ]
+  },
+  {
+   "nome": "Área 7",
+   "setor": 3,
+   "congregacoes": [
+    "Monte Hermon",
+    "Benção",
+    "Fonte de Vida"
+   ]
+  },
+  {
+   "nome": "Área 8",
+   "setor": 4,
+   "congregacoes": [
+    "Jardim de Deus",
+    "Árvore da Vida",
+    "Pedra de Esquina"
+   ]
+  },
+  {
+   "nome": "Área 9",
+   "setor": 5,
+   "congregacoes": [
+    "Nova Luz",
+    "Brilho do Céu",
+    "Vale da Benção"
+   ]
+  },
+  {
+   "nome": "Área 10",
+   "setor": 4,
+   "congregacoes": [
+    "Rosa de Saron",
+    "Monte das Oliveiras",
+    "Grata Nova",
+    "Liberdade em Cristo"
+   ]
+  },
+  {
+   "nome": "Área 11",
+   "setor": 2,
+   "congregacoes": [
+    "Ebenézer",
+    "Ômega",
+    "Herdeiro da Promessa",
+    "Milagre de Deus"
+   ]
+  },
+  {
+   "nome": "Área 12",
+   "setor": 3,
+   "congregacoes": [
+    "Porta de Jerusalém",
+    "Vale do Louvor",
+    "Castelo Forte"
+   ]
+  },
+  {
+   "nome": "Área 13",
+   "setor": 3,
+   "congregacoes": [
+    "Monte Horebe",
+    "Arautos de Cristo",
+    "Deus é Fiel",
+    "Peniel"
+   ]
+  },
+  {
+   "nome": "Área 14",
+   "setor": 4,
+   "congregacoes": [
+    "Céu de Luz",
+    "Vitória",
+    "Adonay"
+   ]
+  },
+  {
+   "nome": "Área 15",
+   "setor": 2,
+   "congregacoes": [
+    "Tenda da Família"
+   ]
+  },
+  {
+   "nome": "Área 16",
+   "setor": 5,
+   "congregacoes": [
+    "Salém",
+    "Monte Sião",
+    "Vale da Decisão"
+   ]
+  },
+  {
+   "nome": "Área 17",
+   "setor": 1,
+   "congregacoes": [
+    "Deus Proverá",
+    "Vale de Saron"
+   ]
+  },
+  {
+   "nome": "Área 18",
+   "setor": 1,
+   "congregacoes": [
+    "Luz do Mundo",
+    "Emanuel",
+    "Nova Galiléia",
+    "Cristo Rei"
+   ]
+  },
+  {
+   "nome": "Área 19",
+   "setor": 5,
+   "congregacoes": [
+    "Jeová Rafá"
+   ]
+  },
+  {
+   "nome": "Área 20",
+   "setor": 4,
+   "congregacoes": [
+    "Oliveira Verdadeira",
+    "Arca da Aliança"
+   ]
+  },
+  {
+   "nome": "Área 21",
+   "setor": 4,
+   "congregacoes": [
+    "Bom Pastor das Ovelhas",
+    "Nova Jerusalém",
+    "Príncipe da Paz",
+    "Nova Canaã"
+   ]
+  },
+  {
+   "nome": "Área 22",
+   "setor": 1,
+   "congregacoes": [
+    "Monte Tabor"
+   ]
+  },
+  {
+   "nome": "Área 23",
+   "setor": 2,
+   "congregacoes": [
+    "Fé em Deus",
+    "Heróis da Fé",
+    "Jeová Shalon"
+   ]
+  },
+  {
+   "nome": "Área 24",
+   "setor": 3,
+   "congregacoes": [
+    "Jardim de Cristo",
+    "Renovo"
+   ]
+  },
+  {
+   "nome": "Área 25",
+   "setor": 3,
+   "congregacoes": [
+    "Fé",
+    "Shalon",
+    "Nova Esperança"
+   ]
+  },
+  {
+   "nome": "Área 26",
+   "setor": 1,
+   "congregacoes": [
+    "Lírio dos Vales",
+    "Monte Santo",
+    "Aliança Eterna"
+   ]
+  },
+  {
+   "nome": "Área 27",
+   "setor": 5,
+   "congregacoes": [
+    "Fonte de Água Viva",
+    "Fonte de Esperança"
+   ]
+  },
+  {
+   "nome": "Área 28",
+   "setor": 2,
+   "congregacoes": [
+    "Tessalônica",
+    "Chave da Vitória"
+   ]
+  },
+  {
+   "nome": "Área 29",
+   "setor": 3,
+   "congregacoes": [
+    "Jeová Shamá"
+   ]
+  },
+  {
+   "nome": "Área 30",
+   "setor": 5,
+   "congregacoes": [
+    "Porta das Ovelhas",
+    "Novas de Paz"
+   ]
+  },
+  {
+   "nome": "Área 31",
+   "setor": 4,
+   "congregacoes": [
+    "Casa do Oleiro",
+    "Monte da Vitória"
+   ]
+  },
+  {
+   "nome": "Área 32",
+   "setor": 2,
+   "congregacoes": [
+    "Torre Forte",
+    "Manancial",
+    "Rocha Eterna"
+   ]
+  },
+  {
+   "nome": "Área 33",
+   "setor": 5,
+   "congregacoes": [
+    "Rio Jordão",
+    "Boas Novas",
+    "Campos Brancos"
+   ]
+  },
+  {
+   "nome": "Manancial de Bênção",
+   "setor": null,
+   "congregacoes": [
+    "Manancial de Bênção"
+   ]
+  }
+ ]
+}
