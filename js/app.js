@@ -9,6 +9,8 @@
   const ESPECIAIS = ['Templo Central', 'Manancial de Bênção'];
   const CENTRO = [-1.305, -48.468];
   const PERTO_M = 500, ISOLADA_M = 2000;
+  // Estrutura do distrito: 33 áreas numeradas + Templo Central + Manancial de Bênção = 96 congregações.
+  const N_AREAS = 33, TOTAL_ESPERADO = 96;
 
   // ---------- Estado ----------
   let congregacoes = [];
@@ -34,6 +36,16 @@
     const n = parseInt(String(area).match(/\d+/)?.[0] ?? '0', 10);
     const h = (n * 137.508) % 360;
     return `hsl(${h.toFixed(0)} 70% 42%)`;
+  }
+  // Padroniza a grafia da área: "1", "01", "AREA 1", "1ª Área", "Área-01" → "Área 1";
+  // variações de "Templo Central" e "Manancial de Bênção" → nome oficial.
+  function normalizarArea(bruto) {
+    const s = String(bruto ?? '').trim(); if (!s) return '';
+    const n = norm(s);
+    if (/templo|sede|central/.test(n)) return 'Templo Central';
+    if (/manancial/.test(n)) return 'Manancial de Bênção';
+    const num = n.match(/\d+/);
+    return num ? `Área ${parseInt(num[0], 10)}` : s;
   }
   const ehEspecial = (c) => ESPECIAIS.some((e) => norm(e) === norm(c.area) || norm(e) === norm(c.nome));
   function ordemArea(a) {
@@ -155,8 +167,12 @@
     const itens = congregacoes.filter((c) => (!area || c.area === area) &&
       (!q || norm(`${c.nome} ${c.area} ${c.bairro}`).includes(q)))
       .sort((a, b) => ordemArea(a.area) - ordemArea(b.area) || a.nome.localeCompare(b.nome, 'pt-BR'));
-    const nAreas = new Set(congregacoes.map((c) => c.area).filter(Boolean)).size;
-    $('#resumo').textContent = `${itens.length} de ${congregacoes.length} congregações · ${nAreas} áreas · ${posicionadas().length} posicionadas no mapa`;
+    const grupos = new Set(congregacoes.map((c) => c.area).filter(Boolean));
+    const nAreas = [...grupos].filter((a) => !ESPECIAIS.includes(a)).length;
+    const total = usandoExemplo ? congregacoes.length : TOTAL_ESPERADO;
+    $('#resumo').textContent = `${itens.length} de ${congregacoes.length} congregações · ${nAreas} áreas` +
+      `${ESPECIAIS.filter((e) => grupos.has(e)).length ? ' + ' + ESPECIAIS.filter((e) => grupos.has(e)).join(' e ') : ''}` +
+      ` · ${posicionadas().length} de ${total} posicionadas no mapa`;
     $('#lista').innerHTML = itens.map((c) => `<li data-id="${esc(c.id)}">
         <span class="bola" style="background:${corArea(c.area)}"></span>
         <div class="info"><div class="nome">${esc(c.nome)}</div>
@@ -316,10 +332,10 @@
     linhas.forEach((l, i) => {
       const nome = String(l[col.nome]).trim(); if (!nome) return;
       // Planilhas que trazem a área só na primeira linha de cada grupo herdam a área anterior.
-      if (col.area && String(l[col.area]).trim()) areaAtual = String(l[col.area]).trim();
+      if (col.area && String(l[col.area]).trim()) areaAtual = normalizarArea(l[col.area]);
       let area = areaAtual;
-      if (/^\d+$/.test(area)) area = `Área ${area}`;
-      if (!area && ESPECIAIS.some((s) => norm(s) === norm(nome))) area = ESPECIAIS.find((s) => norm(s) === norm(nome));
+      const especial = ESPECIAIS.find((s) => norm(s) === norm(nome));
+      if (especial) area = especial; // o próprio Templo Central / Manancial formam um grupo à parte
       const existente = congregacoes.find((c) => !c.exemplo && norm(c.nome) === norm(nome));
       const c = existente || { id: `c${Date.now().toString(36)}${i}` };
       Object.assign(c, { nome, area, dirigente: col.dirigente ? String(l[col.dirigente]).trim() : c.dirigente, endereco: col.endereco ? String(l[col.endereco]).trim() : c.endereco });
@@ -330,10 +346,36 @@
     const manter = congregacoes.filter((c) => !c.exemplo && !novas.includes(c));
     congregacoes = [...manter, ...novas];
     salvar(); atualizarTudo();
-    const nAreas = new Set(novas.map((c) => c.area).filter(Boolean)).size;
-    $('#resultado-import').innerHTML = `<p><span class="num">${novas.length}</span> congregações importadas em <b>${nAreas}</b> áreas.</p>
-      <p class="dica">${novas.filter((c) => !Number.isFinite(c.lat)).length} ainda precisam ser posicionadas no mapa (passo 2).</p>`;
+    $('#resultado-import').innerHTML = relatorioImportacao(novas);
   });
+
+  // Confere a planilha contra a estrutura do distrito (33 áreas + 2 grupos especiais = 96).
+  function relatorioImportacao(lista) {
+    const grupos = new Set(lista.map((c) => c.area).filter(Boolean));
+    const numeradas = [...grupos].filter((a) => /^Área \d+$/.test(a));
+    const faltando = [];
+    for (let i = 1; i <= N_AREAS; i++) if (!grupos.has(`Área ${i}`)) faltando.push(i);
+    const foraDaFaixa = numeradas.filter((a) => +a.split(' ')[1] > N_AREAS || +a.split(' ')[1] < 1);
+    const estranhas = [...grupos].filter((a) => !/^Área \d+$/.test(a) && !ESPECIAIS.includes(a));
+    const semArea = lista.filter((c) => !c.area);
+    const contagem = {}; lista.forEach((c) => { contagem[norm(c.nome)] = (contagem[norm(c.nome)] || 0) + 1; });
+    const repetidas = Object.keys(contagem).filter((k) => contagem[k] > 1);
+    const ok = (v) => v ? '✅' : '⚠️';
+    const avisos = [
+      `${ok(lista.length === TOTAL_ESPERADO)} <b>${lista.length}</b> de ${TOTAL_ESPERADO} congregações`,
+      `${ok(!faltando.length && !foraDaFaixa.length)} <b>${numeradas.length - foraDaFaixa.length}</b> de ${N_AREAS} áreas numeradas` +
+        (faltando.length ? ` – faltam: ${faltando.join(', ')}` : '') +
+        (foraDaFaixa.length ? ` – fora de 1 a ${N_AREAS}: ${foraDaFaixa.map(esc).join(', ')}` : ''),
+      ...ESPECIAIS.map((e) => `${ok(grupos.has(e))} ${e}`),
+    ];
+    if (estranhas.length) avisos.push(`⚠️ Áreas não reconhecidas: ${estranhas.map(esc).join(', ')}`);
+    if (semArea.length) avisos.push(`⚠️ Sem área: ${semArea.map((c) => esc(c.nome)).join(', ')}`);
+    if (repetidas.length) avisos.push(`⚠️ Nomes repetidos: ${repetidas.map((k) => esc(lista.find((c) => norm(c.nome) === k).nome)).join(', ')}`);
+    return `<p><span class="num">${lista.length}</span> congregações importadas.</p>
+      <ul style="margin:4px 0 0 0;padding-left:0;list-style:none">${avisos.map((a) => `<li>${a}</li>`).join('')}</ul>
+      <p class="dica">${lista.filter((c) => !Number.isFinite(c.lat)).length} ainda precisam ser posicionadas no mapa (passo 2).</p>`;
+  }
+  $('#arquivo').addEventListener('click', () => { $('#arquivo').value = ''; });
 
   // ---------- Cadastro: posicionar ----------
   function desenharPendentes() {
