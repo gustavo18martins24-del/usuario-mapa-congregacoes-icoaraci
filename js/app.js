@@ -39,6 +39,8 @@
   const ehEspecial = (c) => ESPECIAIS.includes(c.area);
   const ordemArea = (nome) => areaDe(nome)?.ordem ?? 999;
   const rotuloArea = (nome) => nome;
+  const num = (v, casas = 0) => (v == null || Number.isNaN(v) ? '–' : Number(v).toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas }));
+  const reais = (v) => (v == null ? '–' : `R$ ${num(v)}`);
 
   function corArea(area) {
     if (area === 'Templo Central') return '#7a1f1f';
@@ -124,6 +126,7 @@
   L.control.layers({ 'Ruas (OpenStreetMap)': ruas, 'Satélite': satelite }, null, { position: 'topright' }).addTo(mapa);
   L.control.scale({ imperial: false, position: 'bottomright' }).addTo(mapa);
 
+  mapa.createPane('temas').style.zIndex = 350;   // mapas temáticos ficam abaixo dos limites e marcadores
   const camadas = {
     bairros: L.layerGroup().addTo(mapa),
     localidades: L.layerGroup().addTo(mapa),
@@ -132,7 +135,7 @@
     ligacoes: L.layerGroup(),
     voronoi: L.layerGroup(),
     raios: L.layerGroup(),
-    cobertura: L.layerGroup(),
+    ibge: L.layerGroup(),
     rota: L.layerGroup().addTo(mapa),
     marcadores: L.layerGroup().addTo(mapa),
   };
@@ -145,8 +148,8 @@
 
   // ---------- Bairros e localidades ----------
   async function carregarGeografia() {
-    bairros = await (await fetch('data/bairros.geojson')).json();
-    bairros.features.forEach((f) => { f.properties.area_km2 = turf.area(f) / 1e6; });
+    // Limites oficiais dos bairros (IBGE, Censo 2022) com indicadores agregados dos setores censitários.
+    bairros = await (await fetch('data/ibge_bairros.geojson')).json();
     try { uniaoBairros = turf.union(bairros); } catch { uniaoBairros = null; }
     const corDistrito = { DAICO: '#0b6e4f', DABEN: '#a16207', DAOUT: '#1d4ed8' };
     L.geoJSON(bairros, {
@@ -157,15 +160,24 @@
         l.on('click', (e) => {
           if (posicionando) return;
           const dentro = posicionadas().filter((c) => turf.booleanPointInPolygon(ponto(c), f));
-          const nota = p.nome === 'Cruzeiro' ? '<p class="dica">No OpenStreetMap, este polígono também inclui o bairro Ponta Grossa.</p>' : '';
-          L.popup().setLatLng(e.latlng).setContent(`<div class="popup"><h3>${esc(p.nome)}</h3>
-            <p>Distrito administrativo: <b>${esc(p.distrito_adm)}</b> · ${p.area_km2.toFixed(2).replace('.', ',')} km²</p>
-            <p>Congregações no bairro: <b>${dentro.length}</b>${dentro.length ? ' – ' + dentro.map((c) => esc(c.nome)).join(', ') : ''}</p>${nota}</div>`).openOn(mapa);
+          L.popup({ maxWidth: 320 }).setLatLng(e.latlng).setContent(`<div class="popup"><h3>${esc(p.nome)}</h3>
+            <p class="dica">Distrito ${esc(p.distrito)} (${esc(p.distrito_adm)}) · ${num(p.area_km2, 2)} km²</p>
+            <table class="mini-tabela">
+              <tr><td>População (2022)</td><td class="n"><b>${num(p.pop)}</b></td></tr>
+              <tr><td>Domicílios ocupados</td><td class="n">${num(p.domicilios)}</td></tr>
+              <tr><td>Densidade</td><td class="n">${num(p.dens)} hab/km²</td></tr>
+              <tr><td>Renda média do responsável</td><td class="n">${reais(p.renda_media)}</td></tr>
+              <tr><td>Pop. em favelas e comunidades urbanas</td><td class="n">${num(p.pct_fcu, 1)}%</td></tr>
+              <tr><td>Congregações no bairro</td><td class="n"><b>${dentro.length}</b></td></tr>
+              ${dentro.length ? `<tr><td>Habitantes por congregação</td><td class="n">${num(p.pop / dentro.length)}</td></tr>` : ''}
+            </table>
+            ${dentro.length ? `<p>${dentro.map((c) => esc(c.nome)).join(', ')}</p>` : ''}
+            ${p.comunidades ? `<p class="dica">Comunidades urbanas (IBGE): ${esc(p.comunidades)}</p>` : ''}</div>`).openOn(mapa);
         });
       },
     }).addTo(camadas.bairros);
     $('#lista-bairros').innerHTML = bairros.features.map((f) => f.properties.nome)
-      .concat(['Ponta Grossa']).sort((a, b) => a.localeCompare(b, 'pt-BR')).map((n) => `<option value="${esc(n)}">`).join('');
+      .sort((a, b) => a.localeCompare(b, 'pt-BR')).map((n) => `<option value="${esc(n)}">`).join('');
 
     try { localidades = await (await fetch('data/localidades.json')).json(); } catch { localidades = []; }
     localidades.forEach((l) => {
@@ -210,6 +222,8 @@
     const outras = posicionadas().filter((o) => o.id !== c.id).map((o) => ({ o, d: distM(c, o) })).sort((x, y) => x.d - y.d);
     const viz = outras.slice(0, 3).map(({ o, d }) => `<li>${esc(o.nome)} <span class="dica">(${esc(o.area)})</span> – <b>${km(d)}</b></li>`).join('');
     const ateSede = sede && sede.id !== c.id && temPos(sede) ? `<p>Até a sede (${esc(sede.nome)}): <b>${km(distM(c, sede))}</b></p>` : '';
+    const infl = ibge ? acesso().filter((x) => x.prox?.c.id === c.id) : [];
+    const popInfl = infl.length ? `<p>População na área de influência: <b>${num(infl.reduce((s, x) => s + x.pop, 0))}</b> hab. <span class="dica">(${infl.length} setores censitários, IBGE 2022)</span></p>` : '';
     return `<div class="popup"><h3>${esc(c.nome)}${c.sede_area ? ' <span class="etiqueta sede">Sede</span>' : ''}</h3>
       <p><span class="bola" style="background:${COR_SETOR[a?.setor] || COR_SEM_SETOR}"></span> <b>${esc(c.area)}</b>${a?.setor ? ` · Setor ${a.setor}` : ''}</p>
       ${a?.responsavel ? `<p>Responsável da área: ${esc(a.responsavel)}</p>` : ''}
@@ -217,6 +231,7 @@
       ${c.dirigente ? `<p>Dirigente: ${esc(c.dirigente)}</p>` : ''}
       ${c.endereco ? `<p>Endereço: ${esc(c.endereco)}</p>` : ''}
       ${ateSede}
+      ${popInfl}
       ${viz ? `<p style="margin-top:6px">Mais próximas (linha reta):</p><ol>${viz}</ol>` : ''}
       <p class="linha" style="margin-top:6px">
         <a href="https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lng}" target="_blank" rel="noopener">Como chegar ↗</a>
@@ -544,23 +559,150 @@
     const r = +$('#raio').value;
     posicionadas().forEach((c) => L.circle([c.lat, c.lng], { radius: r, color: corDe(c), weight: 1, fillOpacity: 0.08, interactive: false }).addTo(camadas.raios));
   }
-  function desenharCobertura() {
-    camadas.cobertura.clearLayers();
-    const ps = posicionadas(); if (!bairros || !ps.length) return;
-    const faixas = [[500, '#1a9850', 'até 500 m'], [1000, '#91cf60', '500 m – 1 km'], [1500, '#fee08b', '1 – 1,5 km'], [2500, '#fc8d59', '1,5 – 2,5 km'], [Infinity, '#d73027', 'mais de 2,5 km']];
-    bairros.features.forEach((f) => {
-      // Amostra o bairro numa grade de 250 m e mede cada ponto até a congregação mais próxima.
-      const grade = turf.pointGrid(turf.bbox(f), 0.25, { units: 'kilometers', mask: f });
-      const amostras = grade.features.length ? grade.features : [turf.pointOnFeature(f)];
-      const dists = amostras.map((p) => Math.min(...ps.map((c) => turf.distance(p, ponto(c)) * 1000)));
-      const media = dists.reduce((s, d) => s + d, 0) / dists.length;
-      const n = ps.filter((c) => turf.booleanPointInPolygon(ponto(c), f)).length;
-      L.geoJSON(f, { style: { color: '#334155', weight: 1, fillColor: faixas.find(([lim]) => media <= lim)[1], fillOpacity: 0.55 } })
-        .bindTooltip(`<b>${esc(f.properties.nome)}</b><br>${n} congregação(ões) no bairro<br>Distância média até a mais próxima: ${km(media)}<br>Ponto mais distante: ${km(Math.max(...dists))}`, { sticky: true })
-        .addTo(camadas.cobertura);
-    });
-    $('#legenda-cobertura').innerHTML = '<b>Distância média até uma congregação</b>' + faixas.map(([, c, t]) => `<div><i style="background:${c}"></i>${t}</div>`).join('');
+  // ================= ESTUDO IBGE (Censo 2022) =================
+  // Escalas de um só tom (claro = pouco, escuro = muito). Azul para densidade/distância, laranja para renda.
+  const AZUL = ['#cde2fb', '#86b6ef', '#3987e5', '#1c5cab', '#0d366b'];
+  const LARANJA = ['#fde3d4', '#f7b08f', '#eb6834', '#b8461b', '#7a2a0c'];
+  const COR_FCU = '#6250d6';
+  let ibge = null;          // { setores, centros: [{ lat, lng, pop, f }] }
+  let cacheAcesso = null;   // congregação mais próxima de cada setor (recalcula quando o mapa muda)
+  async function carregarIBGE() {
+    if (ibge) return ibge;
+    const setores = await (await fetch('data/ibge_setores.geojson')).json();
+    ibge = { setores, centros: setores.features.map((f) => {
+      const [lng, lat] = turf.pointOnFeature(f).geometry.coordinates;
+      return { lat, lng, pop: f.properties.pop, f };
+    }) };
+    return ibge;
   }
+  function acesso() {
+    if (cacheAcesso) return cacheAcesso;
+    const ps = posicionadas();
+    cacheAcesso = ibge.centros.map((s) => {
+      let prox = null;
+      for (const c of ps) { const d = turf.distance([s.lng, s.lat], [c.lng, c.lat]) * 1000; if (!prox || d < prox.d) prox = { c, d }; }
+      return { ...s, prox };
+    });
+    return cacheAcesso;
+  }
+  // Quebras por quantis (5 classes), arredondadas para leitura.
+  function quebras(valores, n = 5) {
+    const v = valores.filter((x) => x != null && Number.isFinite(x)).sort((a, b) => a - b);
+    const arred = (x) => { const m = 10 ** Math.max(0, Math.floor(Math.log10(Math.abs(x) || 1)) - 1); return Math.round(x / m) * m; };
+    return [...new Set(Array.from({ length: n - 1 }, (_, i) => arred(v[Math.floor(((i + 1) * v.length) / n)])))];
+  }
+  const classe = (v, qs) => { let i = 0; while (i < qs.length && v > qs[i]) i++; return i; };
+  function legendaFaixas(titulo, cores, qs, fmt) {
+    const rot = cores.slice(0, qs.length + 1).map((_, i) => i === 0 ? `até ${fmt(qs[0])}` : i === qs.length ? `mais de ${fmt(qs[i - 1])}` : `${fmt(qs[i - 1])} – ${fmt(qs[i])}`);
+    return `<b>${titulo}</b>` + rot.map((r, i) => `<div><i style="background:${cores[i]}"></i>${r}</div>`).join('');
+  }
+  async function desenharTemaIBGE() {
+    camadas.ibge.clearLayers();
+    const tema = $('#tema-ibge').value, leg = $('#legenda-ibge');
+    if (!tema) { leg.innerHTML = ''; mapa.removeLayer(camadas.ibge); return; }
+    await carregarIBGE();
+    const props = ibge.setores.features.map((f) => f.properties);
+    let cor, legenda;
+    if (tema === 'densidade') {
+      const qs = quebras(props.map((p) => p.dens));
+      cor = (p) => AZUL[classe(p.dens, qs)];
+      legenda = legendaFaixas('Densidade (hab/km²)', AZUL, qs, (x) => num(x));
+    } else if (tema === 'renda') {
+      const qs = quebras(props.map((p) => p.renda_media));
+      cor = (p) => (p.renda_media == null ? null : LARANJA[classe(p.renda_media, qs)]);
+      legenda = legendaFaixas('Renda média do responsável', LARANJA, qs, (x) => reais(x)) + '<div><i class="sem-dado"></i>sem dado (sigilo ou sem moradores)</div>';
+    } else if (tema === 'fcu') {
+      cor = (p) => (p.fcu ? COR_FCU : null);
+      const pop = props.filter((p) => p.fcu).reduce((s, p) => s + p.pop, 0), tot = props.reduce((s, p) => s + p.pop, 0);
+      legenda = `<b>Favelas e comunidades urbanas (IBGE)</b><div><i style="background:${COR_FCU}"></i>setor em favela ou comunidade urbana: ${num(pop)} hab. (${num((100 * pop) / tot, 1)}%)</div>`;
+    } else {
+      if (!posicionadas().length) { leg.innerHTML = '<p class="dica">Posicione congregações no mapa para ver este tema.</p>'; return; }
+      const qs = [500, 1000, 1500, 2500];
+      const dist = new Map(acesso().map((s) => [s.f, s.prox?.d]));
+      cor = (p, f) => AZUL[classe(dist.get(f), qs)];
+      legenda = legendaFaixas('Distância até a congregação mais próxima', AZUL, qs, (x) => km(x));
+    }
+    const dist = posicionadas().length ? new Map(acesso().map((s) => [s.f, s.prox])) : new Map();
+    L.geoJSON(ibge.setores, {
+      pane: 'temas',
+      style: (f) => { const c = cor(f.properties, f); return { color: '#ffffff', weight: 0.6, fillColor: c || '#9ca3af', fillOpacity: c ? 0.7 : (tema === 'fcu' ? 0 : 0.25) }; },
+      onEachFeature: (f, l) => {
+        const p = f.properties, prox = dist.get(f);
+        l.bindTooltip(`<b>Setor ${esc(p.cod)}</b> · ${esc(p.bairro)}<br>${num(p.pop)} hab. · ${num(p.domicilios)} domicílios<br>
+          Densidade: ${num(p.dens)} hab/km²<br>Renda média do responsável: ${reais(p.renda_media)}
+          ${p.fcu ? `<br>Comunidade urbana: <b>${esc(p.fcu)}</b>` : ''}
+          ${prox ? `<br>Mais próxima: ${esc(prox.c.nome)} (${km(prox.d)})` : ''}`, { sticky: true });
+      },
+    }).addTo(camadas.ibge);
+    camadas.ibge.addTo(mapa);
+    leg.innerHTML = legenda;
+  }
+  $('#tema-ibge').addEventListener('change', desenharTemaIBGE);
+
+  $('#btn-estudo').addEventListener('click', async () => {
+    const out = $('#estudo-ibge');
+    await carregarIBGE();
+    const ps = posicionadas();
+    if (!ps.length) { out.innerHTML = '<p class="dica">Posicione as congregações no mapa para gerar o estudo.</p>'; return; }
+    const R = +$('#raio-acesso').value, ac = acesso();
+    const total = ac.reduce((s, x) => s + x.pop, 0);
+    const perto = ac.filter((x) => x.prox.d <= R).reduce((s, x) => s + x.pop, 0);
+    // Por bairro
+    const linhasBairro = bairros.features.map((f) => {
+      const p = f.properties, sts = ac.filter((x) => x.f.properties.bairro === p.nome);
+      const longe = sts.filter((x) => x.prox.d > R).reduce((s, x) => s + x.pop, 0);
+      const n = ps.filter((c) => turf.booleanPointInPolygon(ponto(c), f)).length;
+      return { p, n, longe, pctLonge: p.pop ? (100 * longe) / p.pop : 0 };
+    }).sort((a, b) => b.longe - a.longe);
+    // População na área de influência (setor → congregação mais próxima), somada por área eclesiástica e por setor da igreja
+    const porCong = new Map(), porArea = new Map(), porSetor = new Map();
+    ac.forEach((x) => {
+      const c = x.prox.c;
+      porCong.set(c.id, (porCong.get(c.id) || 0) + x.pop);
+      porArea.set(c.area, (porArea.get(c.area) || 0) + x.pop);
+      const st = setorDe(c) ?? '—'; porSetor.set(st, (porSetor.get(st) || 0) + x.pop);
+    });
+    const vazios = ac.filter((x) => x.prox.d > R).sort((a, b) => b.pop - a.pop).slice(0, 10);
+    ultimoEstudo = { vazios };
+    out.innerHTML = `
+      <div class="tiles">
+        <div class="tile"><span>População da região</span><b>${num(total)}</b></div>
+        <div class="tile"><span>Hab. por congregação</span><b>${num(total / ps.length)}</b></div>
+        <div class="tile"><span>A até ${km(R)} de uma congregação</span><b>${num((100 * perto) / total, 1)}%</b></div>
+        <div class="tile"><span>Mais longe que ${km(R)}</span><b>${num(total - perto)}</b></div>
+      </div>
+      ${ps.length < congregacoes.length ? `<p class="aviso">Atenção: só ${ps.length} de ${congregacoes.length} congregações estão no mapa. O estudo fica completo quando todas forem posicionadas.</p>` : ''}
+      <h4>Onde abrir novos trabalhos: setores mais populosos a mais de ${km(R)}</h4>
+      <table><thead><tr><th>Setor censitário</th><th class="n">Hab.</th><th class="n">Dist.</th></tr></thead><tbody>
+      ${vazios.map((x, i) => `<tr class="clicavel" data-vazio="${i}"><td>${esc(x.f.properties.bairro)}${x.f.properties.fcu ? `<br><span class="dica">${esc(x.f.properties.fcu)}</span>` : ''}</td><td class="n">${num(x.pop)}</td><td class="n">${km(x.prox.d)}</td></tr>`).join('') || '<tr><td colspan="3">Nenhum: toda a população está perto de uma congregação.</td></tr>'}
+      </tbody></table>
+      <h4>Por bairro</h4>
+      <table><thead><tr><th>Bairro</th><th class="n">Pop.</th><th class="n">Cong.</th><th class="n">Hab./cong.</th><th class="n">Longe</th></tr></thead><tbody>
+      ${linhasBairro.map((l) => `<tr><td>${esc(l.p.nome)}<br><span class="dica">renda ${reais(l.p.renda_media)} · ${num(l.p.pct_fcu, 0)}% em comunidades</span></td><td class="n">${num(l.p.pop)}</td><td class="n">${l.n}</td><td class="n">${l.n ? num(l.p.pop / l.n) : '–'}</td><td class="n">${num(l.pctLonge, 0)}%</td></tr>`).join('')}
+      </tbody></table>
+      <h4>Por setor da igreja: população na área de influência</h4>
+      <table><thead><tr><th>Setor</th><th class="n">Cong.</th><th class="n">População</th><th class="n">Hab./cong.</th></tr></thead><tbody>
+      ${[...porSetor.entries()].sort((a, b) => String(a[0]).localeCompare(String(b[0]))).map(([st, pop]) => { const n = ps.filter((c) => (setorDe(c) ?? '—') === st).length;
+        return `<tr><td><span class="bola" style="background:${COR_SETOR[st] || COR_SEM_SETOR}"></span> ${st === '—' ? 'Sem setor' : `Setor ${st}`}</td><td class="n">${n}</td><td class="n">${num(pop)}</td><td class="n">${num(pop / n)}</td></tr>`; }).join('')}
+      </tbody></table>
+      <h4>Por área: população na área de influência</h4>
+      <table><thead><tr><th>Área</th><th class="n">Cong.</th><th class="n">População</th><th class="n">Hab./cong.</th></tr></thead><tbody>
+      ${[...porArea.entries()].sort((a, b) => ordemArea(a[0]) - ordemArea(b[0])).map(([a, pop]) => { const n = ps.filter((c) => c.area === a).length;
+        return `<tr><td>${esc(a)}</td><td class="n">${n}</td><td class="n">${num(pop)}</td><td class="n">${num(pop / n)}</td></tr>`; }).join('')}
+      </tbody></table>`;
+    popInfluencia = porCong;
+  });
+  let ultimoEstudo = null, popInfluencia = null;
+  $('#estudo-ibge').addEventListener('click', (e) => {
+    const tr = e.target.closest('[data-vazio]'); if (!tr) return;
+    const x = ultimoEstudo.vazios[+tr.dataset.vazio];
+    camadas.rota.clearLayers();
+    L.geoJSON(x.f, { style: { color: '#d7303a', weight: 3, fillOpacity: 0.1 } }).addTo(camadas.rota);
+    L.polyline([[x.lat, x.lng], [x.prox.c.lat, x.prox.c.lng]], { color: '#d7303a', dashArray: '6 6', weight: 2 })
+      .bindTooltip(`${km(x.prox.d)} até ${esc(x.prox.c.nome)}`, { permanent: true }).addTo(camadas.rota);
+    mapa.fitBounds(L.geoJSON(x.f).getBounds().extend([x.prox.c.lat, x.prox.c.lng]).pad(0.3));
+  });
+
   const camadasEstudo = {
     '#cam-bairros': [camadas.bairros], '#cam-localidades': [camadas.localidades],
     '#cam-territorio-setor': [camadas.territorioSetor, desenharTerritorioSetor],
@@ -568,11 +710,9 @@
     '#cam-ligacoes': [camadas.ligacoes, desenharLigacoes],
     '#cam-voronoi': [camadas.voronoi, desenharVoronoi],
     '#cam-raios': [camadas.raios, desenharRaios],
-    '#cam-cobertura': [camadas.cobertura, desenharCobertura],
   };
   Object.entries(camadasEstudo).forEach(([chk, [camada, desenhar]]) => $(chk).addEventListener('change', (e) => {
     if (e.target.checked) { desenhar?.(); camada.addTo(mapa); } else mapa.removeLayer(camada);
-    if (chk === '#cam-cobertura') $('#legenda-cobertura').hidden = !e.target.checked;
   }));
   $('#raio').addEventListener('input', (e) => {
     $('#raio-valor').textContent = `${(e.target.value / 1000).toFixed(e.target.value % 1000 ? 2 : 1).replace('.', ',')} km`;
@@ -706,6 +846,8 @@
   $('#alternar-painel').addEventListener('click', () => $('#painel').classList.toggle('oculto'));
 
   function atualizarTudo() {
+    cacheAcesso = null;
+    if ($('#tema-ibge').value === 'distancia') desenharTemaIBGE();
     preencherFiltros(); desenharMarcadores(); desenharLista(); desenharPendentes();
     Object.entries(camadasEstudo).forEach(([chk, [, desenhar]]) => { if ($(chk).checked) desenhar?.(); });
   }
@@ -729,6 +871,7 @@
     aplicarPermissoes();
     mapa.invalidateSize();
     if (!bairros) await carregarGeografia();
+    carregarIBGE().catch(() => {});
     await recarregar();
     if (bairros) mapa.fitBounds(L.geoJSON(bairros).getBounds(), { padding: [10, 10] });
     desenharUsuarios();

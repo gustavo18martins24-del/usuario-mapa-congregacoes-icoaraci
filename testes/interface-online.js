@@ -12,7 +12,7 @@ const estadoInicial = {
   perfis: [{ id: 'u-admin', email: 'admin@teste', nome: 'Pr. Administrador', papel: 'admin', area: null, criado_em: '2026-01-01' },
            { id: 'u-novo', email: 'lider@teste', nome: 'Líder da Área 5', papel: 'pendente', area: null, criado_em: '2026-01-02' }],
   areas: estrutura.areas.map((a, i) => ({ nome: a.nome, setor: a.setor, responsavel: `Responsável ${a.nome}`, ordem: i })),
-  congregacoes: estrutura.areas.flatMap((a) => a.congregacoes.map((nome) => ({ id: `c${++n}`, nome, area: a.nome, sede_area: nome === a.nome, lat: null, lng: null }))),
+  congregacoes: estrutura.areas.flatMap((a) => a.congregacoes.map((nome) => ({ id: `c${++n}`, nome, area: a.nome, sede_area: nome === a.sede, lat: null, lng: null }))),
 };
 const falhas = [];
 const confere = (cond, msg) => { console.log(`${cond ? '✅' : '❌'} ${msg}`); if (!cond) falhas.push(msg); };
@@ -57,11 +57,11 @@ const confere = (cond, msg) => { console.log(`${cond ? '✅' : '❌'} ${msg}`); 
   await p.click('[data-aba=cadastro]');
   await p.locator('#pendentes li', { hasText: 'Templo Central' }).locator('[data-acao=posicionar]').click();
   await p.mouse.click(860, 330); await p.waitForTimeout(500);
-  await p.locator('#pendentes li', { hasText: 'Maranata' }).locator('[data-acao=editar]').click();
+  await p.locator('#pendentes li', { hasText: 'Macedônia' }).locator('[data-acao=editar]').click();
   await p.check('#form-congregacao [name=sede_area]'); await p.click('#dlg-salvar'); await p.waitForTimeout(500);
   const s1 = await p.evaluate(() => JSON.parse(localStorage.getItem('supabase-simulado')).congregacoes);
   confere(s1.find((c) => c.nome === 'Templo Central').lat != null, 'admin posicionou o Templo Central');
-  confere(s1.find((c) => c.nome === 'Maranata').sede_area, 'admin definiu Maranata como sede da Área 4');
+  confere(s1.find((c) => c.nome === 'Macedônia').sede_area && !s1.find((c) => c.nome === 'Maranata').sede_area, 'admin trocou a sede da Área 4 (Maranata → Macedônia)');
   await sair();
 
   // Editor da Área 5: só edita a própria área

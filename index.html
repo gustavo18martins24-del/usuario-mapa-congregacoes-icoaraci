@@ -98,7 +98,7 @@
       <details open>
         <summary>🗺️ Camadas de estudo</summary>
         <label class="check"><input type="checkbox" id="cam-bairros" checked> Limites dos bairros</label>
-        <label class="check"><input type="checkbox" id="cam-localidades" checked> Localidades (Ponta Grossa, Tapajós, Eduardo Angelim)</label>
+        <label class="check"><input type="checkbox" id="cam-localidades" checked> Localidades (Tapajós, Eduardo Angelim)</label>
         <label class="check"><input type="checkbox" id="cam-territorio-setor"> Território de cada setor</label>
         <label class="check"><input type="checkbox" id="cam-territorio-area"> Território de cada área</label>
         <label class="check"><input type="checkbox" id="cam-ligacoes"> Ligações congregação → sede da área</label>
@@ -108,8 +108,26 @@
           <input type="range" id="raio" min="250" max="3000" step="250" value="1000">
           <span id="raio-valor">1,0 km</span>
         </div>
-        <label class="check"><input type="checkbox" id="cam-cobertura"> Cobertura por bairro</label>
-        <div id="legenda-cobertura" class="legenda" hidden></div>
+      </details>
+
+      <details open>
+        <summary>📊 Estudo demográfico (IBGE – Censo 2022)</summary>
+        <label>Mapa temático por setor censitário
+          <select id="tema-ibge">
+            <option value="">— nenhum —</option>
+            <option value="distancia">Distância até a congregação mais próxima</option>
+            <option value="densidade">Densidade demográfica (hab/km²)</option>
+            <option value="renda">Renda média do responsável (R$)</option>
+            <option value="fcu">Favelas e comunidades urbanas</option>
+          </select>
+        </label>
+        <div id="legenda-ibge" class="legenda-ibge"></div>
+        <label>Distância considerada “perto” de uma congregação
+          <select id="raio-acesso"><option value="500">500 m (~6 min a pé)</option><option value="1000" selected>1 km (~12 min a pé)</option><option value="1500">1,5 km (~18 min a pé)</option></select>
+        </label>
+        <button id="btn-estudo" class="primario">Gerar estudo</button>
+        <div id="estudo-ibge"></div>
+        <p class="dica">Fonte: IBGE, Censo Demográfico 2022: malha de setores censitários e bairros, agregados básicos e rendimento do responsável. A população de cada setor é atribuída à congregação mais próxima do seu centro (linha reta).</p>
       </details>
 
       <details>

@@ -111,7 +111,7 @@ window.Dados = (() => {
         this.dados = {
           areas: e.areas.map((a, i) => ({ nome: a.nome, setor: a.setor, responsavel: null, ordem: i })),
           congregacoes: e.areas.flatMap((a) => a.congregacoes.map((nome) => ({
-            id: `c${++n}`, nome, area: a.nome, sede_area: nome === a.nome, lat: null, lng: null }))),
+            id: `c${++n}`, nome, area: a.nome, sede_area: nome === a.sede, lat: null, lng: null }))),
         };
         this.gravar();
       }

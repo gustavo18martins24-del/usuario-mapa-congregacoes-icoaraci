@@ -19,9 +19,10 @@ for a in e["areas"]:
     for c in a["congregacoes"]:
         linhas.append(f"insert into public.congregacoes (nome, area) select {q(c)}, {q(a['nome'])} "
                       f"where not exists (select 1 from public.congregacoes where lower(nome) = lower({q(c)}) and area = {q(a['nome'])});")
-# Templo Central e Manancial de Bênção são, eles mesmos, a sede do seu grupo.
-linhas.append("update public.congregacoes set sede_area = true where nome in ('Templo Central', 'Manancial de Bênção') "
-              "and area = nome and not exists (select 1 from public.congregacoes s where s.area = congregacoes.area and s.sede_area);")
+# Sede de cada área = primeira congregação da lista (só marca se a área ainda não tem sede).
+for a in e["areas"]:
+    linhas.append(f"update public.congregacoes set sede_area = true where lower(nome) = lower({q(a['sede'])}) and area = {q(a['nome'])} "
+                  f"and not exists (select 1 from public.congregacoes s where s.area = {q(a['nome'])} and s.sede_area);")
 linhas.append("commit;")
 (raiz / "supabase/seed.sql").write_text("\n".join(linhas) + "\n")
 

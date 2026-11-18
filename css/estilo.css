@@ -185,3 +185,19 @@ dialog label.check input { width: auto; margin: 0; }
 /* Enquanto posiciona, o clique sempre vai para o mapa (marcadores e rótulos não interceptam). */
 .posicionando .leaflet-marker-icon, .posicionando .leaflet-interactive { pointer-events: none !important; }
 .posicionando { cursor: crosshair !important; }
+
+/* ===== Estudo IBGE ===== */
+.legenda-ibge { font-size: 12px; margin: 4px 0 10px; }
+.legenda-ibge div { display: flex; align-items: center; gap: 6px; margin: 2px 0; }
+.legenda-ibge i { width: 18px; height: 12px; display: inline-block; border-radius: 2px; flex: none; }
+.legenda-ibge i.sem-dado { background: #9ca3af; opacity: .4; }
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+.tile { border: 1px solid var(--borda); border-radius: 8px; padding: 8px 10px; }
+.tile span { display: block; font-size: 11.5px; color: var(--texto-2); }
+.tile b { font-size: 20px; font-variant-numeric: tabular-nums; }
+#estudo-ibge h4 { margin: 14px 0 2px; font-size: 13px; }
+#estudo-ibge .bola { display: inline-block; vertical-align: middle; width: 11px; height: 11px; }
+tr.clicavel { cursor: pointer; }
+tr.clicavel:hover td { background: var(--fundo-2); }
+.mini-tabela { margin: 6px 0; font-size: 12.5px; }
+.mini-tabela td { padding: 2px 4px; }
