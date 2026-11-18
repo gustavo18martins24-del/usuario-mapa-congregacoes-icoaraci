@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mapa das Congregações – Distrito Icoaraci</title>
+<link rel="stylesheet" href="vendor/leaflet.css">
+<link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+<div id="app">
+  <aside id="painel">
+    <header>
+      <h1>Distrito Icoaraci</h1>
+      <p class="sub">Mapa das congregações · Belém – PA</p>
+      <div id="aviso-exemplo" class="aviso" hidden>
+        Mostrando <b>dados de exemplo</b>. Importe a planilha e posicione as congregações na aba <b>Cadastro</b>.
+      </div>
+    </header>
+
+    <nav class="abas">
+      <button data-aba="congregacoes" class="ativa">Congregações</button>
+      <button data-aba="analise">Análise</button>
+      <button data-aba="cadastro">Cadastro</button>
+    </nav>
+
+    <!-- ABA: CONGREGAÇÕES -->
+    <section id="aba-congregacoes" class="aba ativa">
+      <input id="busca" type="search" placeholder="Buscar congregação, área ou bairro…">
+      <select id="filtro-area"><option value="">Todas as áreas</option></select>
+      <div id="resumo" class="resumo"></div>
+      <ul id="lista" class="lista"></ul>
+    </section>
+
+    <!-- ABA: ANÁLISE -->
+    <section id="aba-analise" class="aba">
+      <details open>
+        <summary>📏 Distância entre duas congregações</summary>
+        <label>De <select id="dist-a"></select></label>
+        <label>Para <select id="dist-b"></select></label>
+        <div class="linha">
+          <button id="btn-distancia" class="primario">Calcular</button>
+          <button id="btn-limpar-rota">Limpar</button>
+        </div>
+        <div id="resultado-distancia" class="resultado"></div>
+      </details>
+
+      <details>
+        <summary>🧭 Congregação mais próxima de cada uma</summary>
+        <p class="dica">Pares a menos de <b>500 m</b> ficam em laranja (possível sobreposição). Congregações a mais de <b>2 km</b> da vizinha ficam em azul (isoladas).</p>
+        <button id="btn-vizinhos" class="primario">Gerar tabela</button>
+        <div id="tabela-vizinhos"></div>
+      </details>
+
+      <details open>
+        <summary>🗺️ Camadas de estudo</summary>
+        <label class="check"><input type="checkbox" id="cam-bairros" checked> Limites dos bairros</label>
+        <label class="check"><input type="checkbox" id="cam-voronoi"> Áreas de influência (Voronoi)</label>
+        <label class="check"><input type="checkbox" id="cam-raios"> Raio de alcance</label>
+        <div class="faixa">
+          <input type="range" id="raio" min="250" max="3000" step="250" value="1000">
+          <span id="raio-valor">1,0 km</span>
+        </div>
+        <label class="check"><input type="checkbox" id="cam-cobertura"> Cobertura por bairro</label>
+        <div id="legenda-cobertura" class="legenda" hidden></div>
+      </details>
+    </section>
+
+    <!-- ABA: CADASTRO -->
+    <section id="aba-cadastro" class="aba">
+      <details open>
+        <summary>1. Importar planilha</summary>
+        <p class="dica">Formatos .xlsx ou .csv. São reconhecidas as colunas <b>Nome</b> (ou Congregação) e <b>Área</b>. Colunas como <b>Dirigente</b> e <b>Endereço</b> são opcionais.</p>
+        <input type="file" id="arquivo" accept=".xlsx,.xls,.csv">
+        <div id="resultado-import" class="resultado"></div>
+      </details>
+      <details open>
+        <summary>2. Posicionar no mapa</summary>
+        <p class="dica">Clique em <b>Posicionar</b> e depois no ponto exato do mapa onde fica o templo. Use a busca de ruas para chegar perto. Depois disso, ainda é possível arrastar o marcador para ajustar.</p>
+        <input id="busca-endereco" type="search" placeholder="Buscar rua ou local (ex.: Rua Manoel Barata, Icoaraci)">
+        <ul id="resultado-endereco" class="lista mini"></ul>
+        <label class="check"><input type="checkbox" id="modo-edicao"> Permitir arrastar marcadores</label>
+        <ul id="pendentes" class="lista"></ul>
+      </details>
+      <details>
+        <summary>3. Salvar e compartilhar</summary>
+        <p class="dica">As posições ficam salvas neste navegador. Exporte o arquivo e envie para o responsável publicar no mapa oficial.</p>
+        <div class="linha">
+          <button id="btn-exportar-json">Exportar .json</button>
+          <button id="btn-exportar-csv">Exportar .csv</button>
+        </div>
+        <button id="btn-apagar" class="perigo">Apagar dados deste navegador</button>
+      </details>
+    </section>
+
+    <footer>Mapa base © colaboradores do <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a></footer>
+  </aside>
+
+  <main id="mapa"></main>
+  <button id="alternar-painel" aria-label="Mostrar/ocultar painel">☰</button>
+  <div id="instrucao" hidden></div>
+</div>
+
+<script src="vendor/leaflet.js"></script>
+<script src="vendor/turf.min.js"></script>
+<script src="vendor/xlsx.full.min.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

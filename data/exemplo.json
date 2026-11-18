@@ -1,0 +1,110 @@
+[
+ {
+  "id": "ex1",
+  "nome": "Congregação Exemplo 1",
+  "area": "Templo Central",
+  "bairro": "Campina de Icoaraci",
+  "lat": -1.292341,
+  "lng": -48.470388,
+  "exemplo": true
+ },
+ {
+  "id": "ex2",
+  "nome": "Congregação Exemplo 2",
+  "area": "Área 1",
+  "bairro": "Cruzeiro",
+  "lat": -1.296689,
+  "lng": -48.484023,
+  "exemplo": true
+ },
+ {
+  "id": "ex3",
+  "nome": "Congregação Exemplo 3",
+  "area": "Área 1",
+  "bairro": "Agulha",
+  "lat": -1.304939,
+  "lng": -48.469688,
+  "exemplo": true
+ },
+ {
+  "id": "ex4",
+  "nome": "Congregação Exemplo 4",
+  "area": "Área 2",
+  "bairro": "Paracuri",
+  "lat": -1.317253,
+  "lng": -48.478974,
+  "exemplo": true
+ },
+ {
+  "id": "ex5",
+  "nome": "Congregação Exemplo 5",
+  "area": "Área 3",
+  "bairro": "Maracacuera",
+  "lat": -1.289673,
+  "lng": -48.44793,
+  "exemplo": true
+ },
+ {
+  "id": "ex6",
+  "nome": "Congregação Exemplo 6",
+  "area": "Área 4",
+  "bairro": "Águas Negras",
+  "lat": -1.299829,
+  "lng": -48.447148,
+  "exemplo": true
+ },
+ {
+  "id": "ex7",
+  "nome": "Congregação Exemplo 7",
+  "area": "Área 5",
+  "bairro": "Tapanã",
+  "lat": -1.33966,
+  "lng": -48.468493,
+  "exemplo": true
+ },
+ {
+  "id": "ex8",
+  "nome": "Congregação Exemplo 8",
+  "area": "Área 2",
+  "bairro": "Parque Guajará",
+  "lat": -1.324272,
+  "lng": -48.459119,
+  "exemplo": true
+ },
+ {
+  "id": "ex9",
+  "nome": "Congregação Exemplo 9",
+  "area": "Manancial de Bênção",
+  "bairro": "Tenoné",
+  "lat": -1.316097,
+  "lng": -48.43962,
+  "exemplo": true
+ },
+ {
+  "id": "ex10",
+  "nome": "Congregação Exemplo 10",
+  "area": "Área 6",
+  "bairro": "Parque Verde",
+  "lat": -1.362463,
+  "lng": -48.448177,
+  "exemplo": true
+ },
+ {
+  "id": "ex11",
+  "nome": "Congregação Exemplo 11",
+  "area": "Área 5",
+  "bairro": "São Clemente",
+  "lat": -1.364601,
+  "lng": -48.463163,
+  "exemplo": true
+ },
+ {
+  "id": "ex12",
+  "nome": "Congregação Exemplo 12",
+  "area": "Área 6",
+  "bairro": "Coqueiro",
+  "lat": -1.348266,
+  "lng": -48.438885,
+  "exemplo": true
+ }
+]
