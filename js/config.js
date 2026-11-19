@@ -6,6 +6,6 @@
 // (supabase/schema.sql). NUNCA coloque aqui a "secret key" / "service_role".
 // Deixe vazio para usar o MODO LOCAL (dados salvos só neste navegador, sem login).
 window.CONFIG = {
-  supabaseUrl: '',
-  supabaseAnonKey: '',
+  supabaseUrl: 'https://hdnxyfconblcrhxaaawx.supabase.co',
+  supabaseAnonKey: 'sb_publishable_e7BXnpaAqmy_-keVgTyu5w_iLTHrHmh',
 };
