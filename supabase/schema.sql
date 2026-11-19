@@ -196,6 +196,15 @@ drop policy if exists historico_ver on public.historico;
 create policy historico_ver on public.historico for select to authenticated
   using (public.meu_papel() in ('editor', 'admin'));
 
+-- ---------- Permissões de acesso às tabelas ----------
+-- Explícitas para não depender dos privilégios padrão do projeto. Quem pode ver/alterar cada linha
+-- continua sendo decidido pelas regras de RLS acima; visitantes sem login (anon) não recebem nada.
+grant usage on schema public to anon, authenticated;
+grant select, insert, update, delete on public.areas, public.perfis, public.congregacoes to authenticated;
+grant select on public.historico to authenticated;
+grant execute on function public.meu_papel(), public.minha_area(), public.definir_sede(uuid) to authenticated;
+revoke all on public.areas, public.perfis, public.congregacoes, public.historico from anon;
+
 -- ---------- Tempo real (mudanças aparecem na hora para todos) ----------
 do $$
 begin

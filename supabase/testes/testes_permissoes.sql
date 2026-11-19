@@ -1,8 +1,6 @@
 -- Testes das regras de permissão. Cada bloco falha (exceção) se a regra não se comportar como esperado.
 \set ON_ERROR_STOP on
-grant usage on schema public to anon, authenticated;
-grant select, insert, update, delete on all tables in schema public to authenticated;
-grant execute on all functions in schema public to authenticated;
+-- (as permissões de tabela vêm do próprio schema.sql)
 insert into areas (nome, setor) values ('Templo Central', 1), ('Área 5', 2), ('Área 6', 2);
 
 
