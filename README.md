@@ -1,6 +1,6 @@
 # Mapa das Congregações – Distrito Icoaraci (Belém-PA)
 
-Mapa interativo das **96 congregações** do distrito, com login para pastores e líderes e ferramentas de estudo geográfico.
+Mapa interativo das **95 congregações** do distrito, com login para pastores e líderes e ferramentas de estudo geográfico.
 
 ## Estrutura do distrito
 - **5 setores** (cores do Demonstrativo de Áreas 2026: 1 roxo, 2 verde, 3 azul, 4 vermelho, 5 amarelo)

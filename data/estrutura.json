@@ -1,5 +1,5 @@
 {
- "fonte": "Demonstrativo de Áreas – Ano/2026 (Congregações) – Total: 96",
+ "fonte": "Demonstrativo de Áreas – Ano/2026 (Congregações) – Total: 96; Ágape (Área 5) retirada a pedido do distrito → 95",
  "setores": [
   {
    "numero": 1,
@@ -80,8 +80,7 @@
    "nome": "Área 5",
    "setor": 2,
    "congregacoes": [
-    "Monte Gerizim",
-    "Ágape"
+    "Monte Gerizim"
    ],
    "sede": "Monte Gerizim"
   },

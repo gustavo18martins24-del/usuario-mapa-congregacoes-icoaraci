@@ -7,7 +7,7 @@
 
   // ---------- Estrutura do distrito ----------
   const ESPECIAIS = ['Templo Central', 'Manancial de Bênção'];
-  const N_AREAS = 33, TOTAL_ESPERADO = 96;
+  const N_AREAS = 33, TOTAL_ESPERADO = 95;
   // Paleta do site: Cream, Slate Blue, Teal, Terracotta, Mustard, Sage Green, Dusty Rose, Deep Plum (+ carvão).
   const PALETA = { creme: '#F2E9D8', ardosia: '#59718A', teal: '#2F6F6D', terracota: '#E07A47', mostarda: '#D4A72C',
                    salvia: '#8FA68F', rosa: '#C47C8A', ameixa: '#5B3A62', carvao: '#1F2124' };

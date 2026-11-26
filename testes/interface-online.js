@@ -10,7 +10,7 @@ const estadoInicial = {
   sessao: null,
   usuarios: [{ id: 'u-admin', email: 'admin@teste', senha: 'segredo1' }, { id: 'u-novo', email: 'lider@teste', senha: 'segredo2' }],
   perfis: [{ id: 'u-admin', email: 'admin@teste', nome: 'Pr. Administrador', papel: 'admin', area: null, criado_em: '2026-01-01' },
-           { id: 'u-novo', email: 'lider@teste', nome: 'Líder da Área 5', papel: 'pendente', area: null, criado_em: '2026-01-02' }],
+           { id: 'u-novo', email: 'lider@teste', nome: 'Líder da Área 6', papel: 'pendente', area: null, criado_em: '2026-01-02' }],
   areas: estrutura.areas.map((a, i) => ({ nome: a.nome, setor: a.setor, responsavel: `Responsável ${a.nome}`, ordem: i })),
   congregacoes: estrutura.areas.flatMap((a) => a.congregacoes.map((nome) => ({ id: `c${++n}`, nome, area: a.nome, sede_area: nome === a.sede, lat: null, lng: null }))),
 };
@@ -42,16 +42,16 @@ const confere = (cond, msg) => { console.log(`${cond ? '✅' : '❌'} ${msg}`); 
   confere(await p.isVisible('#tela-pendente'), 'usuário pendente vê "Aguardando aprovação"');
   await sair();
 
-  // Admin aprova o líder como editor da Área 5
+  // Admin aprova o líder como editor da Área 6
   await entrar('admin@teste', 'segredo1'); await p.waitForSelector('#app:not([hidden])'); await p.waitForTimeout(1500);
   confere((await p.textContent('#usuario-papel')).includes('Admin'), 'admin logado');
   confere(await p.isVisible('[data-aba=usuarios]') && (await p.textContent('[data-aba=usuarios]')).includes('(1)'), 'aba Usuários mostra 1 pendente');
   await p.click('[data-aba=usuarios]'); await p.waitForTimeout(400);
   const item = p.locator('.usuario-item', { hasText: 'lider@teste' });
   await item.locator('[data-campo=papel]').selectOption('editor');
-  await item.locator('[data-campo=area]').selectOption('Área 5'); await p.waitForTimeout(500);
+  await item.locator('[data-campo=area]').selectOption('Área 6'); await p.waitForTimeout(500);
   const est = await p.evaluate(() => JSON.parse(localStorage.getItem('supabase-simulado')).perfis.find((x) => x.email === 'lider@teste'));
-  confere(est.papel === 'editor' && est.area === 'Área 5', 'admin aprovou o líder como editor da Área 5');
+  confere(est.papel === 'editor' && est.area === 'Área 6', 'admin aprovou o líder como editor da Área 6');
 
   // Admin posiciona Templo Central e define sede da Área 4
   await p.click('[data-aba=cadastro]');
@@ -64,22 +64,22 @@ const confere = (cond, msg) => { console.log(`${cond ? '✅' : '❌'} ${msg}`); 
   confere(s1.find((c) => c.nome === 'Macedônia').sede_area && !s1.find((c) => c.nome === 'Maranata').sede_area, 'admin trocou a sede da Área 4 (Maranata → Macedônia)');
   await sair();
 
-  // Editor da Área 5: só edita a própria área
+  // Editor da Área 6: só edita a própria área
   await entrar('lider@teste', 'segredo2'); await p.waitForSelector('#app:not([hidden])'); await p.waitForTimeout(1500);
-  confere((await p.textContent('#usuario-papel')).includes('Editor · Área 5'), 'editor logado com a área no cabeçalho');
+  confere((await p.textContent('#usuario-papel')).includes('Editor · Área 6'), 'editor logado com a área no cabeçalho');
   confere(!(await p.isVisible('[data-aba=usuarios]')), 'editor não vê a aba Usuários');
   await p.click('[data-aba=cadastro]');
   const nomesCadastro = await p.locator('#pendentes li .nome').allTextContents();
-  confere(nomesCadastro.length === 2 && nomesCadastro.every((t) => /Monte Gerizim|Ágape/.test(t)), `Cadastro do editor lista só a Área 5 (${nomesCadastro.join(', ')})`);
-  confere((await p.textContent('#progresso')).includes('da Área 5'), 'progresso mostra a área do editor');
+  confere(nomesCadastro.length === 4 && nomesCadastro.every((t) => /Betânia|Rio de Água Viva|Porta da Vitória|Alfa/.test(t)), `Cadastro do editor lista só a Área 6 (${nomesCadastro.join(', ')})`);
+  confere((await p.textContent('#progresso')).includes('da Área 6'), 'progresso mostra a área do editor');
   confere(!(await p.isVisible('#arquivo')), 'editor não vê a importação de planilha');
-  await p.locator('#pendentes li', { hasText: 'Monte Gerizim' }).locator('[data-acao=posicionar]').click();
+  await p.locator('#pendentes li', { hasText: 'Betânia' }).locator('[data-acao=posicionar]').click();
   await p.mouse.click(900, 470); await p.waitForTimeout(500);
   await p.click('[data-aba=congregacoes]');
   confere(await p.locator('#lista li', { hasText: 'Maranata' }).locator('[data-acao=editar]').count() === 0, 'editor não tem botão de editar em outra área');
-  confere(await p.locator('#lista li', { hasText: 'Ágape' }).locator('[data-acao=editar]').count() === 1, 'editor tem botão de editar na própria área');
-  const s2 = await p.evaluate(() => JSON.parse(localStorage.getItem('supabase-simulado')).congregacoes.find((c) => c.nome === 'Monte Gerizim'));
-  confere(s2.lat != null && s2.bairro, `editor posicionou Monte Gerizim (bairro: ${s2.bairro})`);
+  confere(await p.locator('#lista li', { hasText: 'Alfa' }).locator('[data-acao=editar]').count() === 1, 'editor tem botão de editar na própria área');
+  const s2 = await p.evaluate(() => JSON.parse(localStorage.getItem('supabase-simulado')).congregacoes.find((c) => c.nome === 'Betânia'));
+  confere(s2.lat != null && s2.bairro, `editor posicionou Betânia (bairro: ${s2.bairro})`);
   await p.screenshot({ path: path.join(process.argv[2] || '.', '10-editor.png') });
   await sair();
 
@@ -87,7 +87,7 @@ const confere = (cond, msg) => { console.log(`${cond ? '✅' : '❌'} ${msg}`); 
   await p.evaluate(() => { const s = JSON.parse(localStorage.getItem('supabase-simulado')); s.perfis.find((x) => x.email === 'lider@teste').papel = 'leitor'; localStorage.setItem('supabase-simulado', JSON.stringify(s)); });
   await entrar('lider@teste', 'segredo2'); await p.waitForSelector('#app:not([hidden])'); await p.waitForTimeout(1200);
   confere(!(await p.isVisible('[data-aba=cadastro]')) && await p.locator('#lista [data-acao=editar]').count() === 0, 'leitor não vê Cadastro nem botões de edição');
-  confere((await p.textContent('#lista')).includes('Responsável Área 5'), 'leitor vê o responsável de cada área');
+  confere((await p.textContent('#lista')).includes('Responsável Área 6'), 'leitor vê o responsável de cada área');
   await sair();
 
   // Criar conta nova

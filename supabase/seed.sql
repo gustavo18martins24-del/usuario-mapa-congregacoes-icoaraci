@@ -1,4 +1,4 @@
--- Carga inicial gerada por scripts/gerar_seed.py a partir de: Demonstrativo de Áreas – Ano/2026 (Congregações) – Total: 96
+-- Carga inicial gerada por scripts/gerar_seed.py a partir de: Demonstrativo de Áreas – Ano/2026 (Congregações) – Total: 96; Ágape (Área 5) retirada a pedido do distrito → 95
 begin;
 insert into public.areas (nome, setor, ordem) values ('Templo Central', 1, 0) on conflict (nome) do update set setor = excluded.setor, ordem = excluded.ordem;
 insert into public.areas (nome, setor, ordem) values ('Área 1', 1, 1) on conflict (nome) do update set setor = excluded.setor, ordem = excluded.ordem;
@@ -54,7 +54,6 @@ insert into public.congregacoes (nome, area) select 'Jeová Jireh', 'Área 4' wh
 insert into public.congregacoes (nome, area) select 'Jeová Nissi', 'Área 4' where not exists (select 1 from public.congregacoes where lower(nome) = lower('Jeová Nissi') and area = 'Área 4');
 insert into public.congregacoes (nome, area) select 'Vida Nova', 'Área 4' where not exists (select 1 from public.congregacoes where lower(nome) = lower('Vida Nova') and area = 'Área 4');
 insert into public.congregacoes (nome, area) select 'Monte Gerizim', 'Área 5' where not exists (select 1 from public.congregacoes where lower(nome) = lower('Monte Gerizim') and area = 'Área 5');
-insert into public.congregacoes (nome, area) select 'Ágape', 'Área 5' where not exists (select 1 from public.congregacoes where lower(nome) = lower('Ágape') and area = 'Área 5');
 insert into public.congregacoes (nome, area) select 'Betânia', 'Área 6' where not exists (select 1 from public.congregacoes where lower(nome) = lower('Betânia') and area = 'Área 6');
 insert into public.congregacoes (nome, area) select 'Rio de Água Viva', 'Área 6' where not exists (select 1 from public.congregacoes where lower(nome) = lower('Rio de Água Viva') and area = 'Área 6');
 insert into public.congregacoes (nome, area) select 'Porta da Vitória', 'Área 6' where not exists (select 1 from public.congregacoes where lower(nome) = lower('Porta da Vitória') and area = 'Área 6');

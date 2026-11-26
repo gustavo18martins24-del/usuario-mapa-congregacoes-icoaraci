@@ -105,7 +105,7 @@ window.Dados = (() => {
     async carregar() {
       this.dados = this.ler();
       if (!this.dados) {
-        // Primeira vez: estrutura oficial (96 congregações, ainda sem posição no mapa).
+        // Primeira vez: estrutura oficial (95 congregações, ainda sem posição no mapa).
         const e = await (await fetch('data/estrutura.json')).json();
         let n = 0;
         this.dados = {
