@@ -8,8 +8,13 @@
   // ---------- Estrutura do distrito ----------
   const ESPECIAIS = ['Templo Central', 'Manancial de Bênção'];
   const N_AREAS = 33, TOTAL_ESPERADO = 96;
-  const COR_SETOR = { 1: '#6a3d9a', 2: '#2e9e4f', 3: '#2b8cd6', 4: '#d7303a', 5: '#e7b416' };
-  const COR_SEM_SETOR = '#78716c';
+  // Paleta do site: Cream, Slate Blue, Teal, Terracotta, Mustard, Sage Green, Dusty Rose, Deep Plum (+ carvão).
+  const PALETA = { creme: '#F2E9D8', ardosia: '#59718A', teal: '#2F6F6D', terracota: '#E07A47', mostarda: '#D4A72C',
+                   salvia: '#8FA68F', rosa: '#C47C8A', ameixa: '#5B3A62', carvao: '#1F2124' };
+  // Cores dos setores nas camadas de análise (territórios, Voronoi, raios), tiradas da mesma paleta.
+  // Terracotta e Mustard levemente ajustados para os 5 setores passarem no teste de daltonismo.
+  const COR_SETOR = { 1: '#5B3A62', 2: '#8FA68F', 3: '#59718A', 4: '#B8552A', 5: '#DDB02E' };
+  const COR_SEM_SETOR = '#8a857c';
   const CENTRO = [-1.305, -48.468];
   const PERTO_M = 500, ISOLADA_M = 2000;
   const PAPEIS = { pendente: 'Pendente', leitor: 'Leitor', editor: 'Editor', admin: 'Admin' };
@@ -42,13 +47,23 @@
   const num = (v, casas = 0) => (v == null || Number.isNaN(v) ? '–' : Number(v).toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas }));
   const reais = (v) => (v == null ? '–' : `R$ ${num(v)}`);
 
-  function corArea(area) {
-    if (area === 'Templo Central') return '#7a1f1f';
-    if (area === 'Manancial de Bênção') return '#0f766e';
-    const n = parseInt(String(area).match(/\d+/)?.[0] ?? '0', 10);
-    return `hsl(${((n * 137.508) % 360).toFixed(0)} 68% 42%)`;
+  const corDe = (c) => COR_SETOR[setorDe(c)] || COR_SEM_SETOR;
+
+  // ---------- Ícones (alfinetes) ----------
+  // Congregação: Teal com templo creme · Sede da área e Templo Central: Terracotta com estrela creme e contorno carvão.
+  // O Manancial de Bênção segue o padrão das congregações. O número no canto indica o setor.
+  const PINO = 'M20 50C20 50 4 31 4 19a16 16 0 0 1 32 0c0 12-16 31-16 31z';
+  const ehSedeVisual = (c) => !!c.sede_area && c.area !== 'Manancial de Bênção';
+  function svgPino(sede, w) {
+    const corpo = sede ? PALETA.terracota : PALETA.teal, tinta = PALETA.creme;
+    const glifo = sede
+      ? `<path d="m12 4 2.4 5 5.4.6-4 3.7 1.1 5.4L12 16l-4.9 2.7 1.1-5.4-4-3.7 5.4-.6z" fill="${tinta}"/>`
+      : `<path d="M12 3v3M10.5 4.5h3" stroke="${tinta}" stroke-width="1.6" stroke-linecap="round"/><path d="M5 11.5 12 7l7 4.5V19H5z" fill="${tinta}"/><rect x="10.3" y="13.5" width="3.4" height="5.5" rx="1.7" fill="${corpo}"/>`;
+    const contorno = sede ? `<path d="${PINO}" fill="none" stroke="${PALETA.carvao}" stroke-width="5"/>` : '';
+    return `<svg class="svg-pino" width="${w}" height="${Math.round(w * 1.3)}" viewBox="0 0 40 52" aria-hidden="true">${contorno}<path d="${PINO}" fill="${corpo}" stroke="${tinta}" stroke-width="2.5"/><g transform="translate(8 7)">${glifo}</g></svg>`;
   }
-  const corDe = (c) => $('#modo-cor').value === 'area' ? corArea(c.area) : (COR_SETOR[setorDe(c)] || COR_SEM_SETOR);
+  const seloSetor = (setor) => (setor ? `<span class="num-setor" title="Setor ${setor}">${setor}</span>` : '');
+  const miniPino = (c) => `<span class="mini-pino">${svgPino(ehSedeVisual(c), 20)}${seloSetor(setorDe(c))}</span>`;
 
   // Padroniza a grafia da área: "1", "01", "AREA 1", "1ª Área", "Área-01" → "Área 1".
   function normalizarArea(bruto) {
@@ -151,9 +166,9 @@
     // Limites oficiais dos bairros (IBGE, Censo 2022) com indicadores agregados dos setores censitários.
     bairros = await (await fetch('data/ibge_bairros.geojson')).json();
     try { uniaoBairros = turf.union(bairros); } catch { uniaoBairros = null; }
-    const corDistrito = { DAICO: '#0b6e4f', DABEN: '#a16207' };
+    const corDistrito = { DAICO: PALETA.ardosia, DABEN: PALETA.ardosia };
     L.geoJSON(bairros, {
-      style: (f) => ({ color: corDistrito[f.properties.distrito_adm] || '#555', weight: 1.6, dashArray: '5 4', fillOpacity: 0.03 }),
+      style: (f) => ({ color: corDistrito[f.properties.distrito_adm] || PALETA.ardosia, weight: 1.6, dashArray: '5 4', fillColor: PALETA.creme, fillOpacity: 0.2 }),
       onEachFeature: (f, l) => {
         const p = f.properties;
         l.bindTooltip(p.nome, { permanent: true, direction: 'center', className: 'rotulo-bairro' });
@@ -200,11 +215,11 @@
     const [fs, fa, so] = [$('#filtro-setor').value, $('#filtro-area').value, $('#so-sedes').checked];
     posicionadas().forEach((c) => {
       const apagada = (fs && String(setorDe(c)) !== fs) || (fa && c.area !== fa) || (so && !c.sede_area);
-      const tipo = ehEspecial(c) ? 'especial' : c.sede_area ? 'sede' : 'comum';
-      const tam = { especial: 26, sede: 22, comum: 16 }[tipo];
+      const tipo = ehSedeVisual(c) ? 'sede' : 'comum';
+      const w = tipo === 'sede' ? 34 : 28, h = Math.round(w * 1.3);
       const icone = L.divIcon({
-        className: '', iconSize: [tam, tam], iconAnchor: [tam / 2, tam / 2],
-        html: `<div class="marcador ${tipo}${apagada ? ' apagada' : ''}"><div class="ponto" style="background:${corDe(c)}">${tipo === 'sede' ? '★' : ''}</div><div class="rotulo">${esc(c.nome)}</div></div>`,
+        className: '', iconSize: [w, h], iconAnchor: [w / 2, h], popupAnchor: [0, -h + 4],
+        html: `<div class="marcador ${tipo}${apagada ? ' apagada' : ''}">${svgPino(tipo === 'sede', w)}${seloSetor(setorDe(c))}<div class="rotulo">${esc(c.nome)}</div></div>`,
       });
       const m = L.marker([c.lat, c.lng], {
         icon: icone, draggable: arrastar && podeEditar(c), title: `${c.nome} – ${c.area}`,
@@ -225,7 +240,7 @@
     const infl = ibge ? acesso().filter((x) => x.prox?.c.id === c.id) : [];
     const popInfl = infl.length ? `<p>População na área de influência: <b>${num(infl.reduce((s, x) => s + x.pop, 0))}</b> hab. <span class="dica">(${infl.length} setores censitários, IBGE 2022)</span></p>` : '';
     return `<div class="popup"><h3>${esc(c.nome)}${c.sede_area ? ' <span class="etiqueta sede">Sede</span>' : ''}</h3>
-      <p><span class="bola" style="background:${COR_SETOR[a?.setor] || COR_SEM_SETOR}"></span> <b>${esc(c.area)}</b>${a?.setor ? ` · Setor ${a.setor}` : ''}</p>
+      <p><b>${esc(c.area)}</b>${a?.setor ? ` · Setor ${seloSetor(a.setor)}` : ' · sem setor'}</p>
       ${a?.responsavel ? `<p>Responsável da área: ${esc(a.responsavel)}</p>` : ''}
       <p>Bairro: <b>${esc(c.bairro || bairroDe(c))}</b>${c.localidade ? ` · ${esc(c.localidade)}` : ''}</p>
       ${c.dirigente ? `<p>Dirigente: ${esc(c.dirigente)}</p>` : ''}
@@ -247,7 +262,7 @@
   function itemCongregacao(c, comBotao) {
     const pos = temPos(c);
     return `<li data-id="${esc(c.id)}" class="${pos ? '' : 'sem-posicao'}">
-      <span class="bola${c.sede_area ? ' sede' : ''}" style="background:${corDe(c)}">${c.sede_area ? '★' : ''}</span>
+      ${miniPino(c)}
       <div class="info"><div class="nome">${esc(c.nome)}${c.sede_area ? ' <span class="etiqueta sede">Sede</span>' : ''}</div>
       <div class="meta">${pos ? esc(c.bairro || '') + (c.localidade ? ' · ' + esc(c.localidade) : '') : '<i>não posicionada</i>'}</div></div>
       ${comBotao && podeEditar(c) ? `<button data-acao="posicionar">${pos ? 'Mover' : 'Posicionar'}</button>` : ''}
@@ -260,8 +275,8 @@
       const a = areaDe(nome) || {};
       cs.sort((x, y) => (y.sede_area - x.sede_area) || x.nome.localeCompare(y.nome, 'pt-BR'));
       const semSede = !ESPECIAIS.includes(nome) && !congregacoes.some((c) => c.area === nome && c.sede_area);
-      return `<div class="grupo-area"><div class="cab-area" style="--cor:${COR_SETOR[a.setor] || COR_SEM_SETOR}">
-          <b>${esc(rotuloArea(nome))}</b><span>${a.setor ? `Setor ${a.setor}` : ''}</span>
+      return `<div class="grupo-area"><div class="cab-area">
+          <b>${esc(rotuloArea(nome))}</b><span>${a.setor ? `Setor ${seloSetor(a.setor)}` : 'sem setor'}</span>
           ${semSede ? '<span class="etiqueta alerta" title="Defina a sede desta área">sem sede</span>' : ''}</div>
         ${a.responsavel ? `<div class="responsavel">${esc(a.responsavel)}</div>` : ''}
         <ul class="lista">${cs.map((c) => itemCongregacao(c, comBotao)).join('')}</ul></div>`;
@@ -289,8 +304,8 @@
     fa.innerHTML = '<option value="">Todas as áreas</option>' + areas.filter((a) => !vs || String(a.setor) === vs)
       .map((a) => `<option value="${esc(a.nome)}">${esc(a.nome)}${a.setor ? ` (Setor ${a.setor})` : ''}</option>`).join('');
     fa.value = [...fa.options].some((o) => o.value === va) ? va : '';
-    $('#legenda-setores').innerHTML = setores.map((s) => `<span><i style="background:${COR_SETOR[s]}"></i>Setor ${s}</span>`).join('') +
-      '<span><i class="leg-sede">★</i>Sede da área</span><span><i class="leg-especial"></i>Templo Central / Manancial</span>';
+    $('#legenda-setores').innerHTML = `<span>${svgPino(false, 18)} Congregação</span><span>${svgPino(true, 20)} Sede da área / Templo Central</span>` +
+      `<span>${seloSetor(1)}…${seloSetor(5)} número = setor</span>`;
     const opts = posicionadas().slice().sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
       .map((c) => `<option value="${esc(c.id)}">${esc(c.nome)} (${esc(c.area)})</option>`).join('');
     ['#dist-a', '#dist-b'].forEach((s, i) => { const v = $(s).value; $(s).innerHTML = opts; $(s).value = v || $(s).options[i]?.value || ''; });
@@ -320,7 +335,6 @@
     const sel = posicionadas().filter((c) => filtrar().includes(c));
     if (sel.length && s !== '#so-sedes') mapa.fitBounds(L.latLngBounds(sel.map((c) => [c.lat, c.lng])).pad(0.3), { maxZoom: 16 });
   }));
-  $('#modo-cor').addEventListener('change', atualizarTudo);
 
   // ---------- Formulário ----------
   let editando = null;
@@ -530,7 +544,7 @@
   }
   const desenharTerritorioSetor = () => desenharTerritorios(camadas.territorioSetor, (c) => setorDe(c), (s) => COR_SETOR[s], (s) => `Setor ${s}`);
   const desenharTerritorioArea = () => desenharTerritorios(camadas.territorioArea, (c) => (ehEspecial(c) ? null : c.area),
-    (a, l) => ($('#modo-cor').value === 'area' ? corArea(a) : COR_SETOR[setorDe(l[0])] || COR_SEM_SETOR), (a) => `${a} (Setor ${areaDe(a)?.setor})`);
+    (a, l) => COR_SETOR[setorDe(l[0])] || COR_SEM_SETOR, (a) => `${a} (Setor ${areaDe(a)?.setor})`);
   function desenharLigacoes() {
     camadas.ligacoes.clearLayers();
     posicionadas().filter((c) => !c.sede_area).forEach((c) => {
