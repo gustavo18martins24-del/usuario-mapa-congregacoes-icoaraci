@@ -28,12 +28,15 @@ ARQUIVOS = {
         f"{FTP}/Agregados_por_Setores_Censitarios_Rendimento_do_Responsavel/Agregados_por_setores_renda_responsavel_BR_20260508_csv.zip",
 }
 MUNICIPIO = "Belém"
-DISTRITOS = {"Icoaraci": "DAICO", "Bengui": "DABEN", "Outeiro": "DAOUT"}
-# Mangueirão: o IBGE registra o bairro no distrito Entroncamento, mas 84% dos moradores
-# (28.963 de 34.605) estão em setores do distrito Bengui. Entra inteiro no estudo, como DABEN.
-BAIRROS_EXTRA = {"Mangueirão": "DABEN"}
-# Fora do estudo: setores sem bairro oficial no distrito Outeiro (ilhas de Cotijuba, Combu, Ilha Grande
-# e comunidades quilombolas insulares – 17.516 hab. em 2022).
+DISTRITOS = {"Icoaraci": "DAICO", "Bengui": "DABEN"}
+# Área de estudo do Distrito Icoaraci (igreja): os 9 bairros do distrito administrativo de Icoaraci
+# e 3 bairros do Bengui. Ficaram fora, a pedido do distrito: Brasília, São João do Outeiro, Água Boa,
+# Itaiteua, Coqueiro, Una, Cabanagem, Benguí, Mangueirão e São Clemente.
+BAIRROS = {
+    "Águas Negras", "Agulha", "Campina de Icoaraci", "Cruzeiro", "Maracacuera",
+    "Paracuri", "Parque Guajará", "Ponta Grossa", "Tenoné",
+    "Tapanã", "Parque Verde", "Pratinha",
+}
 UTM = 31982            # SIRGAS 2000 / UTM 22S – metros, para simplificar e medir áreas
 TOLERANCIA_M = 4       # simplificação das linhas (imperceptível na escala do mapa)
 
@@ -78,7 +81,8 @@ def exportar(gdf, arquivo):
 def main():
     baixar()
     ba = gpd.read_file(CACHE / "PA_bairros_CD2022.gpkg")
-    ba = ba[(ba.NM_MUN == MUNICIPIO) & (ba.NM_DIST.isin(DISTRITOS) | ba.NM_BAIRRO.isin(BAIRROS_EXTRA))].copy()
+    ba = ba[(ba.NM_MUN == MUNICIPIO) & ba.NM_BAIRRO.isin(BAIRROS)].copy()
+    assert set(ba.NM_BAIRRO) == BAIRROS, f"bairros não encontrados no IBGE: {BAIRROS - set(ba.NM_BAIRRO)}"
     st = gpd.read_file(CACHE / "PA_setores_CD2022.gpkg")
     st = st[(st.NM_MUN == MUNICIPIO) & st.NM_BAIRRO.isin(set(ba.NM_BAIRRO))].copy()
     renda = renda_por_setor(set(st.CD_SETOR))
@@ -109,7 +113,7 @@ def main():
     ba["dens"] = (ba["pop"] / ba.area_km2).round(0)
     ba["renda_media"] = (ba.renda_x_resp / ba.resp).round(2)
     ba["pct_fcu"] = (100 * ba.pop_fcu / ba["pop"]).round(1)
-    ba["distrito_adm"] = ba.NM_BAIRRO.map(BAIRROS_EXTRA).fillna(ba.NM_DIST.map(DISTRITOS))
+    ba["distrito_adm"] = ba.NM_DIST.map(DISTRITOS)
     ba["comunidades"] = ba.comunidades.map(lambda l: "; ".join(l) if isinstance(l, list) else "")
     # Conferência: a soma dos setores deve bater com o total oficial do bairro (v0001).
     dif = (ba["pop"] - ba.v0001.map(numero)).abs().max()

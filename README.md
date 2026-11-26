@@ -8,9 +8,9 @@ Mapa interativo das **96 congregações** do distrito, com login para pastores e
 - Fonte: *Demonstrativo de Áreas – Ano/2026*, em `data/estrutura.json`
 
 ## Funcionalidades
-- **Mapa base:** ruas (OpenStreetMap), satélite e **limites oficiais dos 22 bairros** (IBGE, Censo 2022): Icoaraci, Bengui (com Mangueirão) e Outeiro
+- **Mapa base:** ruas (OpenStreetMap), satélite e **limites oficiais dos 12 bairros** da área de estudo (IBGE, Censo 2022): os 9 bairros de Icoaraci, mais Tapanã, Parque Verde e Pratinha
 - **Localidades:** Tapajós (Tapanã) e Eduardo Angelim (Parque Guajará)
-- **Estudo demográfico (IBGE, Censo 2022)**, com base em 756 setores censitários e 479.462 habitantes:
+- **Estudo demográfico (IBGE, Censo 2022)**, com base em 477 setores censitários e 308.474 habitantes:
   - mapas temáticos de densidade, renda média do responsável, favelas e comunidades urbanas e distância até a congregação mais próxima
   - percentual da população perto de uma congregação (500 m / 1 km / 1,5 km) e habitantes por congregação, por bairro, por área e por setor da igreja
   - lista dos setores mais populosos longe de qualquer congregação, como candidatos a novos trabalhos
@@ -65,7 +65,7 @@ node testes/interface-online.js
 
 O primeiro comando serve o site. O segundo roda os testes das regras do banco num PostgreSQL local. O terceiro roda os testes de interface (login e permissões) com o Supabase simulado.
 
-- `scripts/preparar_ibge.py`: baixa e processa a malha e os agregados do Censo 2022 em `data/ibge_*.geojson`. Fora do estudo ficam as ilhas sem bairro oficial (Cotijuba, Combu etc., 17.516 hab.).
+- `scripts/preparar_ibge.py`: baixa e processa a malha e os agregados do Censo 2022 em `data/ibge_*.geojson`. A lista de bairros da área de estudo fica no início do script.
 - `scripts/gerar_seed.py`: gera `supabase/seed.sql` a partir de `data/estrutura.json`
 
 Mapa base © colaboradores do OpenStreetMap (ODbL).

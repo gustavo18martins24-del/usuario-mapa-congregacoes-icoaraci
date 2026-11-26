@@ -151,7 +151,7 @@
     // Limites oficiais dos bairros (IBGE, Censo 2022) com indicadores agregados dos setores censitários.
     bairros = await (await fetch('data/ibge_bairros.geojson')).json();
     try { uniaoBairros = turf.union(bairros); } catch { uniaoBairros = null; }
-    const corDistrito = { DAICO: '#0b6e4f', DABEN: '#a16207', DAOUT: '#1d4ed8' };
+    const corDistrito = { DAICO: '#0b6e4f', DABEN: '#a16207' };
     L.geoJSON(bairros, {
       style: (f) => ({ color: corDistrito[f.properties.distrito_adm] || '#555', weight: 1.6, dashArray: '5 4', fillOpacity: 0.03 }),
       onEachFeature: (f, l) => {
