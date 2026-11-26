@@ -123,8 +123,6 @@ label.inline select { margin: 0; padding: 4px 6px; }
 .linha2 select { margin-bottom: 8px; }
 
 /* ===== Legenda e lista por área ===== */
-.legenda-setores { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--texto-2); margin: 4px 0 8px; }
-.legenda-setores span { display: inline-flex; align-items: center; gap: 4px; }
 .grupo-area { margin-bottom: 8px; }
 .cab-area { display: flex; gap: 8px; align-items: center; padding: 5px 8px; border-radius: 6px; background: var(--fundo-2); border-left: 5px solid var(--ardosia); font-size: 13px; }
 .cab-area span { color: var(--texto-2); font-size: 12px; }
@@ -218,8 +216,41 @@ tr.clicavel:hover td { background: var(--fundo-2); }
 .mini-pino { position: relative; display: inline-block; flex: none; width: 24px; }
 .mini-pino .svg-pino { display: block; margin: 0 auto; filter: drop-shadow(0 1px 2px rgba(31,33,36,.35)); }
 .mini-pino .num-setor { position: absolute; top: -4px; right: -6px; width: 14px; height: 14px; font-size: 8.5px; line-height: 10px; border-width: 1.5px; }
-.legenda-setores { gap: 6px 14px; }
-.legenda-setores span { gap: 6px; }
-.legenda-setores .svg-pino { display: inline-block; vertical-align: middle; }
 .cab-area .num-setor, .popup .num-setor { width: 16px; height: 16px; font-size: 9.5px; line-height: 12px; }
 .rotulo-bairro { color: var(--ardosia); }
+
+/* ===== Painel: abas de setor e cartões de área ===== */
+.abas-setor { display: flex; gap: 2px; padding: 3px; margin: 2px 0 8px; background: var(--fundo-2); border: 1px solid var(--borda); border-radius: 9px; }
+.abas-setor button { flex: 1; min-width: 0; padding: 6px 2px; border: 0; border-radius: 6px; background: none; color: var(--texto-2); font-size: 13px; white-space: nowrap; }
+.abas-setor button:hover { color: var(--texto); }
+.abas-setor button.ativa { background: var(--teal); color: var(--creme); font-weight: 600; }
+.abas-setor button[data-filtro="sedes"] { flex: 1.8; }
+.abas-setor button[data-filtro=""] { flex: 1.5; }
+.abas-setor button:focus-visible { outline: 2px solid var(--mostarda); outline-offset: 1px; }
+.resumo-linha { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--texto-2); margin: 0 0 10px; }
+.resumo-linha b { color: var(--texto); }
+.resumo-linha .barra { flex: 1; height: 6px; margin: 0; border: 0; border-radius: 3px; background: var(--borda); }
+.resumo-linha .barra i { background: var(--teal); border-radius: 3px; }
+.cartao-area { border: 1px solid var(--borda); border-radius: 9px; margin-bottom: 7px; padding: 0; background: var(--fundo-2); overflow: hidden; }
+.cartao-area summary { display: flex; align-items: center; gap: 9px; padding: 8px 10px; cursor: pointer; list-style: none; font-weight: 400; }
+.cartao-area summary::-webkit-details-marker { display: none; }
+.cartao-area summary::marker { content: ''; }
+.cartao-area summary .txt { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.cartao-area summary b { font-size: 13.5px; }
+.cartao-area summary .meta { font-size: 11.5px; color: var(--texto-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cartao-area summary .seta::before { content: '▸'; color: var(--texto-2); font-size: 12px; display: inline-block; transition: transform .15s; }
+.cartao-area[open] summary .seta::before { transform: rotate(90deg); }
+.cartao-area .conteudo { border-top: 1px solid var(--borda); background: var(--fundo); }
+.cartao-area .responsavel { padding: 6px 12px 2px; }
+.cartao-area .lista li { padding: 7px 10px 7px 12px; }
+.cartao-area .lista li:last-child { border-bottom: 0; }
+.cartao-area .lista li button[data-acao="posicionar"] { border: 0; background: none; color: var(--primaria); font-size: 12px; padding: 4px 2px; }
+.num-setor.vazio { background: transparent; color: var(--texto-2); border-style: dashed; border-color: var(--texto-2); }
+
+/* Legenda no mapa */
+.legenda-mapa { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; max-width: 330px; padding: 6px 10px; border-radius: 8px; font-size: 11.5px; color: var(--carvao); background: rgba(255,255,255,.92); box-shadow: 0 1px 5px rgba(0,0,0,.25); }
+.legenda-mapa span { display: inline-flex; align-items: center; gap: 5px; }
+.legenda-mapa .svg-pino { display: inline-block; }
+.legenda-mapa .num-setor { width: 15px; height: 15px; font-size: 9px; line-height: 11px; }
+@media (max-width: 760px) { .legenda-mapa { display: none; } }
+@media (prefers-color-scheme: dark) { .legenda-mapa { background: rgba(31,33,36,.92); color: var(--creme); } }

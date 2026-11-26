@@ -69,16 +69,17 @@
     <!-- ABA: CONGREGAÇÕES -->
     <section id="aba-congregacoes" class="aba ativa">
       <input id="busca" type="search" placeholder="Buscar congregação, área, bairro ou responsável…">
-      <div class="linha2">
-        <select id="filtro-setor"><option value="">Todos os setores</option></select>
-        <select id="filtro-area"><option value="">Todas as áreas</option></select>
-      </div>
-      <div class="linha2">
-        <label class="check"><input type="checkbox" id="so-sedes"> Só as sedes</label>
-      </div>
-      <div id="legenda-setores" class="legenda-setores"></div>
-      <div id="resumo" class="resumo"></div>
-      <div id="lista" class="lista-areas"></div>
+      <nav id="abas-setor" class="abas-setor" role="tablist" aria-label="Filtrar por setor">
+        <button role="tab" data-filtro="" class="ativa" aria-selected="true">Todos</button>
+        <button role="tab" data-filtro="1">1</button>
+        <button role="tab" data-filtro="2">2</button>
+        <button role="tab" data-filtro="3">3</button>
+        <button role="tab" data-filtro="4">4</button>
+        <button role="tab" data-filtro="5">5</button>
+        <button role="tab" data-filtro="sedes">★ Sedes</button>
+      </nav>
+      <div id="resumo" class="resumo-linha"></div>
+      <div id="lista" class="cartoes-area"></div>
     </section>
 
     <!-- ABA: ANÁLISE -->

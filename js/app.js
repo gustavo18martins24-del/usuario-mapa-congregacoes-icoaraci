@@ -212,7 +212,7 @@
   function desenharMarcadores() {
     camadas.marcadores.clearLayers(); marcadores.clear();
     const arrastar = $('#modo-edicao').checked;
-    const [fs, fa, so] = [$('#filtro-setor').value, $('#filtro-area').value, $('#so-sedes').checked];
+    const fs = /^\d$/.test(filtroAba) ? filtroAba : '', fa = '', so = filtroAba === 'sedes';
     posicionadas().forEach((c) => {
       const apagada = (fs && String(setorDe(c)) !== fs) || (fa && c.area !== fa) || (so && !c.sede_area);
       const tipo = ehSedeVisual(c) ? 'sede' : 'comum';
@@ -282,30 +282,70 @@
         <ul class="lista">${cs.map((c) => itemCongregacao(c, comBotao)).join('')}</ul></div>`;
     }).join('');
   }
+  // ---------- Abas de setor + cartões de área ----------
+  let filtroAba = '';                 // '' (todos) | '1'..'5' | 'sedes'
+  const areasAbertas = new Set();     // cartões abertos (sobrevive aos redesenhos)
   function filtrar() {
-    const q = norm($('#busca').value), fs = $('#filtro-setor').value, fa = $('#filtro-area').value, so = $('#so-sedes').checked;
-    return congregacoes.filter((c) => (!fs || String(setorDe(c)) === fs) && (!fa || c.area === fa) && (!so || c.sede_area) &&
+    const q = norm($('#busca').value);
+    const fs = /^\d$/.test(filtroAba) ? filtroAba : '', so = filtroAba === 'sedes';
+    return congregacoes.filter((c) => (!fs || String(setorDe(c)) === fs) && (!so || c.sede_area) &&
       (!q || norm(`${c.nome} ${c.area} ${c.bairro} ${c.localidade} ${areaDe(c.area)?.responsavel} setor ${setorDe(c)}`).includes(q)));
+  }
+  function cartoesArea(lista) {
+    const busca = !!$('#busca').value.trim(), soSedes = filtroAba === 'sedes';
+    const porArea = new Map();
+    lista.forEach((c) => { if (!porArea.has(c.area)) porArea.set(c.area, []); porArea.get(c.area).push(c); });
+    return [...porArea.entries()].sort((a, b) => ordemArea(a[0]) - ordemArea(b[0])).map(([nome, cs]) => {
+      const a = areaDe(nome) || {}, sede = sedeDa(nome), total = congregacoes.filter((c) => c.area === nome).length;
+      cs.sort((x, y) => (y.sede_area - x.sede_area) || x.nome.localeCompare(y.nome, 'pt-BR'));
+      const aberta = busca || soSedes || areasAbertas.has(nome);
+      const semSede = !ESPECIAIS.includes(nome) && !sede;
+      const fora = cs.filter((c) => !temPos(c)).length;
+      return `<details class="cartao-area" data-area="${esc(nome)}" ${aberta ? 'open' : ''}>
+        <summary>${seloSetor(a.setor) || '<span class="num-setor vazio" title="Sem setor">–</span>'}
+          <span class="txt"><b>${esc(nome)}</b>
+            <span class="meta">${total} cong.${sede ? ` · sede ${esc(sede.nome)}` : ''}${fora ? ` · ${fora} fora do mapa` : ''}</span></span>
+          ${semSede ? '<span class="etiqueta alerta">sem sede</span>' : ''}<span class="seta" aria-hidden="true"></span></summary>
+        <div class="conteudo">
+          ${a.responsavel ? `<div class="responsavel">${esc(a.responsavel)}</div>` : ''}
+          <ul class="lista">${cs.map((c) => itemCongregacao(c, !temPos(c))).join('')}</ul>
+        </div></details>`;
+    }).join('');
   }
   function desenharLista() {
     const itens = filtrar();
     const nAreas = areas.filter((a) => !ESPECIAIS.includes(a.nome)).length;
     const sedes = areas.filter((a) => !ESPECIAIS.includes(a.nome) && sedeDa(a.nome)).length;
-    $('#resumo').innerHTML = `${itens.length} de ${congregacoes.length} congregações · ${nAreas} áreas + Templo Central e Manancial<br>` +
-      `<b>${posicionadas().length}</b> de ${congregacoes.length} no mapa · <b>${sedes}</b> de ${nAreas} sedes de área definidas`;
-    $('#lista').innerHTML = itens.length ? grupos(itens, false) : '<p class="dica">Nenhuma congregação encontrada.</p>';
+    const noMapa = posicionadas().length, pct = congregacoes.length ? (100 * noMapa) / congregacoes.length : 0;
+    $('#resumo').innerHTML = `<span><b>${noMapa}</b>/${congregacoes.length} no mapa</span>
+      <span class="barra" title="${Math.round(pct)}% posicionadas"><i style="width:${Math.max(pct, 1.5)}%"></i></span>
+      <span><b>${sedes}</b>/${nAreas} sedes</span>`;
+    $('#lista').innerHTML = itens.length ? cartoesArea(itens) : '<p class="dica">Nenhuma congregação encontrada.</p>';
   }
+  $('#lista').addEventListener('toggle', (e) => {
+    const d = e.target.closest?.('details[data-area]');
+    if (!d || $('#busca').value.trim() || filtroAba === 'sedes') return;
+    if (d.open) areasAbertas.add(d.dataset.area); else areasAbertas.delete(d.dataset.area);
+  }, true);
+  $$('#abas-setor button').forEach((b) => b.addEventListener('click', () => {
+    filtroAba = b.dataset.filtro;
+    $$('#abas-setor button').forEach((x) => { x.classList.toggle('ativa', x === b); x.setAttribute('aria-selected', String(x === b)); });
+    desenharLista(); desenharMarcadores();
+    const sel = posicionadas().filter((c) => filtrar().includes(c));
+    if (sel.length && /^\d$/.test(filtroAba)) mapa.fitBounds(L.latLngBounds(sel.map((c) => [c.lat, c.lng])).pad(0.3), { maxZoom: 16 });
+  }));
+
+  // Legenda dos ícones no canto do mapa
+  const legendaMapa = L.control({ position: 'bottomleft' });
+  legendaMapa.onAdd = () => {
+    const d = L.DomUtil.create('div', 'legenda-mapa');
+    d.innerHTML = `<span>${svgPino(false, 15)} Congregação</span><span>${svgPino(true, 17)} Sede / Templo Central</span><span>${seloSetor('1')} nº = setor</span>`;
+    L.DomEvent.disableClickPropagation(d);
+    return d;
+  };
+  legendaMapa.addTo(mapa);
+
   function preencherFiltros() {
-    const setores = [...new Set(areas.map((a) => a.setor).filter(Boolean))].sort();
-    const fs = $('#filtro-setor'), vs = fs.value;
-    fs.innerHTML = '<option value="">Todos os setores</option>' + setores.map((s) => `<option value="${s}">Setor ${s}</option>`).join('');
-    fs.value = vs;
-    const fa = $('#filtro-area'), va = fa.value;
-    fa.innerHTML = '<option value="">Todas as áreas</option>' + areas.filter((a) => !vs || String(a.setor) === vs)
-      .map((a) => `<option value="${esc(a.nome)}">${esc(a.nome)}${a.setor ? ` (Setor ${a.setor})` : ''}</option>`).join('');
-    fa.value = [...fa.options].some((o) => o.value === va) ? va : '';
-    $('#legenda-setores').innerHTML = `<span>${svgPino(false, 18)} Congregação</span><span>${svgPino(true, 20)} Sede da área / Templo Central</span>` +
-      `<span>${seloSetor(1)}…${seloSetor(5)} número = setor</span>`;
     const opts = posicionadas().slice().sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
       .map((c) => `<option value="${esc(c.id)}">${esc(c.nome)} (${esc(c.area)})</option>`).join('');
     ['#dist-a', '#dist-b'].forEach((s, i) => { const v = $(s).value; $(s).innerHTML = opts; $(s).value = v || $(s).options[i]?.value || ''; });
@@ -329,12 +369,6 @@
   $('#lista').addEventListener('click', cliqueLista);
   $('#pendentes').addEventListener('click', cliqueLista);
   $('#busca').addEventListener('input', () => { desenharLista(); });
-  ['#filtro-setor', '#filtro-area', '#so-sedes'].forEach((s) => $(s).addEventListener('change', () => {
-    if (s === '#filtro-setor') preencherFiltros();
-    desenharLista(); desenharMarcadores();
-    const sel = posicionadas().filter((c) => filtrar().includes(c));
-    if (sel.length && s !== '#so-sedes') mapa.fitBounds(L.latLngBounds(sel.map((c) => [c.lat, c.lng])).pad(0.3), { maxZoom: 16 });
-  }));
 
   // ---------- Formulário ----------
   let editando = null;
