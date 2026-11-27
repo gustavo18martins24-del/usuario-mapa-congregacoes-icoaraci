@@ -13,6 +13,23 @@ window.Dados = (() => {
   'use strict';
   const CAMPOS = ['nome', 'area', 'sede_area', 'bairro', 'localidade', 'dirigente', 'endereco', 'observacoes', 'lat', 'lng'];
   const so = (c) => Object.fromEntries(CAMPOS.filter((k) => k in c).map((k) => [k, c[k] === '' ? null : c[k]]));
+  const temPosicao = (c) => c && c.lat != null && c.lng != null;
+  // Importação "só preenche o que falta": congregação que já está no mapa mantém a posição (e o bairro);
+  // endereço já cadastrado também é mantido. Devolve os campos a gravar e o que foi preservado.
+  function mesclarImportacao(atual, novo, estat) {
+    const patch = { ...novo };
+    delete patch.sede_area;
+    if (temPosicao(atual)) {
+      if ('lat' in patch || 'lng' in patch) estat.posicoesMantidas++;
+      delete patch.lat; delete patch.lng; delete patch.bairro;
+    } else if (temPosicao(patch)) estat.posicionadas++;
+    if (atual && atual.endereco && 'endereco' in patch) {
+      if (patch.endereco && patch.endereco !== atual.endereco) estat.enderecosMantidos++;
+      delete patch.endereco;
+    }
+    return patch;
+  }
+  const novaEstat = () => ({ incluidas: 0, atualizadas: 0, posicionadas: 0, posicoesMantidas: 0, enderecosMantidos: 0 });
   const erro = (r) => { if (r.error) throw new Error(traduzir(r.error.message)); return r.data; };
   function traduzir(m) {
     const t = {
@@ -64,21 +81,26 @@ window.Dados = (() => {
     async remover(id) { erro(await this.sb.from('congregacoes').delete().eq('id', id)); }
     async definirSede(id) { erro(await this.sb.rpc('definir_sede', { cid: id })); }
     async importar(lista) {
-      const existentes = erro(await this.sb.from('congregacoes').select('id,nome,area'));
+      const existentes = erro(await this.sb.from('congregacoes').select('id,nome,area,lat,lng,endereco'));
       const chave = (c) => `${c.area}|${c.nome}`.toLowerCase();
-      const mapa = new Map(existentes.map((c) => [chave(c), c.id]));
-      const novas = [], alteradas = [];
-      lista.forEach((c) => { const id = mapa.get(chave(c)); (id ? alteradas : novas).push({ ...so(c), ...(id ? { id } : {}) }); });
+      const mapa = new Map(existentes.map((c) => [chave(c), c]));
+      const estat = novaEstat(), novas = [], alteradas = [];
+      lista.forEach((c) => {
+        const atual = mapa.get(chave(c));
+        if (atual) alteradas.push({ id: atual.id, patch: mesclarImportacao(atual, so(c), estat) });
+        else novas.push(mesclarImportacao(null, so(c), estat));
+      });
       // Sedes vêm por definirSede depois, para não violar "uma sede por área" no meio da importação.
-      const semSede = (c) => { const x = { ...c }; delete x.sede_area; return x; };
-      if (novas.length) erro(await this.sb.from('congregacoes').insert(novas.map(semSede)));
-      for (const c of alteradas) erro(await this.sb.from('congregacoes').update(semSede(c)).eq('id', c.id));
+      if (novas.length) erro(await this.sb.from('congregacoes').insert(novas));
+      for (const { id, patch } of alteradas) {
+        if (Object.keys(patch).length) erro(await this.sb.from('congregacoes').update(patch).eq('id', id));
+      }
       const { congregacoes } = await this.carregar();
       for (const c of lista.filter((x) => x.sede_area)) {
         const alvo = congregacoes.find((x) => chave(x) === chave(c));
         if (alvo && !alvo.sede_area) await this.definirSede(alvo.id);
       }
-      return { incluidas: novas.length, atualizadas: alteradas.length };
+      return { ...estat, incluidas: novas.length, atualizadas: alteradas.length };
     }
     async historico(id) {
       return erro(await this.sb.from('historico').select('*').eq('congregacao_id', id).order('em', { ascending: false }).limit(30));
@@ -133,14 +155,14 @@ window.Dados = (() => {
     }
     async importar(lista) {
       const chave = (c) => `${c.area}|${c.nome}`.toLowerCase();
-      let incluidas = 0, atualizadas = 0;
+      const estat = novaEstat();
       for (const c of lista) {
         const alvo = this.dados.congregacoes.find((x) => chave(x) === chave(c));
-        const { sede_area, ...resto } = c;
-        if (alvo) { Object.assign(alvo, so(resto)); atualizadas++; } else { await this.salvar(resto); incluidas++; }
-        if (sede_area) await this.definirSede((alvo || this.dados.congregacoes.find((x) => chave(x) === chave(c))).id);
+        const patch = mesclarImportacao(alvo, so(c), estat);
+        if (alvo) { Object.assign(alvo, patch); estat.atualizadas++; } else { await this.salvar(patch); estat.incluidas++; }
+        if (c.sede_area) await this.definirSede((alvo || this.dados.congregacoes.find((x) => chave(x) === chave(c))).id);
       }
-      this.gravar(); return { incluidas, atualizadas };
+      this.gravar(); return estat;
     }
     async historico() { return []; }
     async perfis() { return []; }

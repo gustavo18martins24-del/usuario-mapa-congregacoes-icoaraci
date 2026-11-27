@@ -808,10 +808,23 @@
       const rel = relatorioImportacao(lista);
       const invalidas = lista.filter((c) => !areaDe(c.area));
       if (invalidas.length) { out.innerHTML = rel + `<p class="msg erro">Corrija as áreas inválidas antes de importar (${invalidas.length} linha(s)).</p>`; return; }
+      // Linhas que não batem com nenhuma congregação existente (mesma área e mesmo nome) viram congregações NOVAS: confirma antes.
+      const chave = (c) => `${c.area}|${c.nome}`.toLowerCase();
+      const existentes = new Set(congregacoes.map(chave));
+      const novas = lista.filter((c) => !existentes.has(chave(c)));
+      if (novas.length && !confirm(`${novas.length} linha(s) da planilha não correspondem a nenhuma congregação do mapa e serão INCLUÍDAS como novas:\n\n` +
+          novas.slice(0, 15).map((c) => `• ${c.nome} (${c.area})`).join('\n') + (novas.length > 15 ? '\n…' : '') + '\n\nContinuar?')) {
+        out.innerHTML = rel + '<p class="msg">Importação cancelada.</p>'; return;
+      }
       out.innerHTML = rel + '<p class="dica">Importando…</p>';
       const r = await Dados.importar(lista);
       await recarregar();
-      out.innerHTML = rel + `<p class="msg ok">${r.incluidas} incluída(s), ${r.atualizadas} atualizada(s).</p>`;
+      out.innerHTML = rel + `<p class="msg ok">${r.atualizadas} congregação(ões) atualizada(s)${r.incluidas ? `, ${r.incluidas} incluída(s)` : ''}.</p>
+        <ul class="relatorio">
+          <li>📍 ${r.posicionadas} posicionada(s) agora no mapa</li>
+          <li>🔒 ${r.posicoesMantidas} já estavam no mapa e mantiveram a posição</li>
+          ${r.enderecosMantidos ? `<li>🔒 ${r.enderecosMantidos} mantiveram o endereço já cadastrado</li>` : ''}
+        </ul>`;
     } catch (err) { out.innerHTML = `<p class="msg erro">${esc(err.message)}</p>`; }
   });
   function relatorioImportacao(lista) {
