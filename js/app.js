@@ -787,6 +787,10 @@
   $('#arquivo').addEventListener('change', async (e) => {
     const arq = e.target.files[0]; if (!arq) return;
     const out = $('#resultado-import');
+    if (!/\.(xlsx|xls|csv)$/i.test(arq.name)) {
+      out.innerHTML = `<p class="msg erro">O arquivo <b>${esc(arq.name)}</b> não é uma planilha. Escolha um arquivo <b>.xlsx</b>, <b>.xls</b> ou <b>.csv</b> (PDF e imagens não podem ser importados).</p>`;
+      return;
+    }
     try {
       const wb = XLSX.read(await arq.arrayBuffer());
       const linhas = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
